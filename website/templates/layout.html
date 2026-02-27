@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- If a title is passed as a parameter, use that, otherwise use the default -->
+    {% if title %}
+        <title>{{ title }}</title>
+    {% else %}
+        <title>Firebase Demo</title>
+    {% endif %}
+
+    <!-- Bootstrap 5 CSS, Icons and custom CSS file links -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" 
+            rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" 
+            crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" 
+            crossorigin="anonymous"></script>
+    
+    {% block register_scripts %} {% endblock register_scripts %}
+    {% block signIn_scripts %} {% endblock signIn_scripts %}
+    {% block home_scripts %} {% endblock home_scripts %}
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light headerBG">
+        <!-- lg = large breakpoint, headerBG = custom css BG color -->
+        <div class="container"> <!-- Container will contain content in certain space in middle of page -->
+            <a href="{{ url_for('index') }}" class="navbar-brand">
+                <img src="{{ url_for('static', filename='/img/Built_with_Firebase_Logo_LightTP.png') }}" alt="Built with Firebase" class="d-inline-block align-text-top">
+            </a>
+
+            <!-- Hamburger Menu Button-->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Collapsible navbar menu with custom hover underline CSS animation -->
+            <div class="collapse navbar-collapse" id="navmenu">
+                <!-- Links to hamburger menu button -->
+                <ul class="navbar-nav ms-auto">
+                    {% block index_nav_links %}{% endblock index_nav_links %}
+                    {% block home_nav_links %}{% endblock home_nav_links %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    {% block index_overview %} {% endblock index_overview %}
+    {% block register %} {% endblock register %}
+    {% block signIn %} {% endblock signIn %}
+    {% block home %} {% endblock home %}
+    
+    <!-- Footer -->
+    {% include 'includes/_footer.html' %}
+    
+</body>
+</html>

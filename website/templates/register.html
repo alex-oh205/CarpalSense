@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block register_scripts %}
+    <script type="module" src="{{ url_for('static', filename='/js/register.js') }}"></script>
+{% endblock register_scripts %}
+
+{% block register %}
+    <div class="container">
+        <br><h2 class="text-center">Account Registration</h2><br>
+    </div>
+
+    <!--Sign Up -->
+    <div class="signUpForm mb-5">     
+        <form>
+            <input type="text" placeholder="First Name" id="firstName" class="form-control mb-3">
+            <input type="text" placeholder="Last Name" id="lastName" class="form-control mb-3">
+            <input type="email" placeholder="Email" id="userEmail" class="form-control mb-3">
+            <input type="password" placeholder="password" id="userPass" class="form-control mb-3">
+            <button type = "button" id="submitData" name="submitData" class="btn btn-outline-primary mb-3 w-100">Register</button>
+            <a href="signIn.html" class="badge bg-secondary py-1 w-100">Already have an account?</a>
+        </form>
+    </div>
+{% endblock register %}

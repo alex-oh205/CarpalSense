@@ -1,11 +1,309 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CarpalSense</title>
-</head>
-<body>
-    
-</body>
-</html>
+{% extends 'layout.html' %}
+
+{% block home_scripts %}
+    <script type="module" src="{{ url_for('static', filename='/js/home.js') }}"></script>
+{% endblock home_scripts %}
+
+{% block home_nav_links %}
+    <li class="nav-item nbMenuItem">
+        <a id="userLink" class="nav-link" href="">User Name</a>
+    </li>
+    <li class="nav-item nbMenuItem">
+        <a id="signOut" class="nav-link hover-underline-animation"
+           href="{{ url_for('signIn') }}?next={{ request.path }}">Sign Out</a>
+    </li>
+{% endblock home_nav_links %}
+
+{% block home %}
+    <div class="container">
+        <br><br>
+        <h1 id = "welcome"></h1><br><br>
+    </div>
+
+    <!--Firebase Data Operations -->
+    <!--Set and Update Data-->
+    <div class="container border">
+        <br><h2>Set & Update Data</h2><br>
+        <ol class="list-group list-group-numbered notes">
+            <li class="list-group-item border-0"><strong>Set</strong> - will completely overwrite all of the data stored at the node.</li>
+            <li class="list-group-item border-0"><strong>Update</strong> - will only replace the fields that have changed at the node, or add new fields if they aren't present</li>
+            <li class="list-group-item border-0">If you're collecting data from a sensor, you probably want to use update.</li>
+        </ol><br>
+        
+        <div class="container dataForm mb-5">
+            <form>
+                <select class="form-select mb-3" aria-label="Default select example" id="year">
+                    <option selected>Trial (Year)</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                </select>
+                <select class="form-select mb-3" aria-label="Default select example" id="month">
+                    <option selected>Month</option>
+                    <option value="Jan">Jan</option>
+                    <option value="Feb">Feb</option>
+                    <option value="Mar">Mar</option>
+                    <option value="Apr">Apr</option>
+                    <option value="May">May</option>
+                    <option value="Jun">Jun</option>
+                    <option value="Jul">Jul</option>
+                    <option value="Aug">Aug</option>
+                    <option value="Sep">Sep</option>
+                    <option value="Oct">Oct</option>
+                    <option value="Nov">Nov</option>
+                    <option value="Dec">Dec</option>
+                </select>
+                <select class="form-select mb-3" aria-label="Default select example" id="day">
+                    <option selected>Day</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                    <option value="29">29</option>
+                    <option value="30">30</option>
+                    <option value="31">31</option>
+                                
+                </select>
+                <input type="text" class="form-control mb-3" placeholder="Temperature (°F)" id="temperature">
+                <button type = "button" id="set" name="set" class="btn btn-outline-primary mb-3 w-100">Set</button>
+                <button type = "button" id="update" name="update" class="btn btn-outline-secondary mb-3 w-100">Update</button>
+            </form>       
+        </div>
+    </div><br>
+
+    <!--Get a single datum -->
+    <div class="container border">
+        <br><h2>Get a Datum (single data point)</h2><br>
+        <ol class="list-group list-group-numbered notes">
+            <li class="list-group-item border-0">Retrieve a single datum from a node and display it in a table.</li>
+        </ol><br>
+        
+        <div class="container dataForm mb-5">
+            <form>
+                <select class="form-select mb-3" aria-label="Default select example" id="getYear">
+                    <option selected>Trial (Year)</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                </select>
+                <select class="form-select mb-3" aria-label="Default select example" id="getMonth">
+                    <option selected>Month</option>
+                    <option value="Jan">Jan</option>
+                    <option value="Feb">Feb</option>
+                    <option value="Mar">Mar</option>
+                    <option value="Apr">Apr</option>
+                    <option value="May">May</option>
+                    <option value="Jun">Jun</option>
+                    <option value="Jul">Jul</option>
+                    <option value="Aug">Aug</option>
+                    <option value="Sep">Sep</option>
+                    <option value="Oct">Oct</option>
+                    <option value="Nov">Nov</option>
+                    <option value="Dec">Dec</option>
+                </select>
+                <select class="form-select mb-3" aria-label="Default select example" id="getDay">
+                    <option selected>Day</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                    <option value="29">29</option>
+                    <option value="30">30</option>
+                    <option value="31">31</option>                                
+                </select>
+                <button type = "button" id="get" name="get" class="btn btn-outline-primary mb-3 w-100">get</button>
+            </form>       
+        </div>
+
+        <!-- Table for displaying selected data -->
+        <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Year</th>
+                <th scope="col">Month</th>
+                <th scope="col">Day</th>
+                <th scope="col">Temperature (°F)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><p id ="yearVal"></p></td>
+                <td><p id ="monthVal"></td>
+                <td><p id ="dayVal"></td>
+                <td><p id ="tempVal"></p></td>
+              </tr>
+              <tr>
+            </tbody>
+          </table>
+    </div><br>
+
+    <!--Get a data set -->
+    <div class="container border">
+        <br><h2>Get a Data Set</h2><br>
+        <ol class="list-group list-group-numbered notes">
+            <li class="list-group-item border-0">Retrieve an entire month's set of data and display in a table</li>
+        </ol><br>
+        
+        <div class="container dataForm mb-5">
+            <form>
+                <select class="form-select mb-3" aria-label="Default select example" id="getSetYear">
+                    <option selected>Trial (Year)</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                </select>
+                <select class="form-select mb-3" aria-label="Default select example" id="getSetMonth">
+                    <option selected>Month</option>
+                    <option value="Jan">Jan</option>
+                    <option value="Feb">Feb</option>
+                    <option value="Mar">Mar</option>
+                    <option value="Apr">Apr</option>
+                    <option value="May">May</option>
+                    <option value="Jun">Jun</option>
+                    <option value="Jul">Jul</option>
+                    <option value="Aug">Aug</option>
+                    <option value="Sep">Sep</option>
+                    <option value="Oct">Oct</option>
+                    <option value="Nov">Nov</option>
+                    <option value="Dec">Dec</option>
+                </select>
+                <button type = "button" id="getDataSet" name="getDataSet" class="btn btn-outline-primary mb-3 w-100">Get Dataset</button>
+            </form>       
+        </div>
+
+        <div>
+            <h5 id="setYearVal"></h5>
+            <h5 id="setMonthVal"></h5>
+        </div>
+
+        <!-- Table for displaying data set -->
+        <div class="container">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Day</th>
+                    <th scope="col">Temperature (°F)</th>
+                </tr>
+                </thead>
+                <tbody id = "tbody-2">
+                </tbody>
+            </table>
+        </div>
+    </div><br>
+
+    </div><br>
+
+    <!--Delete Data-->
+    <div class="container border">
+        <br><h2>Delete Data</h2><br>
+        <ol class="list-group list-group-numbered notes">
+            <li class="list-group-item border-0">This function will allow you to delete a single day's data</li>
+            <li class="list-group-item border-0">To delete an entire month's data, you need to remove modify the directory path removing the 'day' part.</li>
+        </ol><br>
+        
+        <div class="container dataForm mb-5">
+            <form>
+                <select class="form-select mb-3" aria-label="Default select example" id="delYear">
+                    <option selected>Trial (Year)</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                </select>
+                <select class="form-select mb-3" aria-label="Default select example" id="delMonth">
+                    <option selected>Month</option>
+                    <option value="Jan">Jan</option>
+                    <option value="Feb">Feb</option>
+                    <option value="Mar">Mar</option>
+                    <option value="Apr">Apr</option>
+                    <option value="May">May</option>
+                    <option value="Jun">Jun</option>
+                    <option value="Jul">Jul</option>
+                    <option value="Aug">Aug</option>
+                    <option value="Sep">Sep</option>
+                    <option value="Oct">Oct</option>
+                    <option value="Nov">Nov</option>
+                    <option value="Dec">Dec</option>
+                </select>
+                <select class="form-select mb-3" aria-label="Default select example" id="delDay">
+                    <option selected>Day</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                    <option value="29">29</option>
+                    <option value="30">30</option>
+                    <option value="31">31</option>                                
+                </select>
+                <button type = "button" id="delete" name="delete" class="btn btn-outline-primary mb-3 w-100">Delete</button>
+            </form>       
+        </div>
+    </div><br>
+{% endblock home %}
