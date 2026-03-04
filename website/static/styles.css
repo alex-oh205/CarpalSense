@@ -1,0 +1,93 @@
+table th{
+    /*Keep column headers at the top as table is scrolled*/
+    position: sticky;
+    top: 0px; /* https://www.w3schools.com/cssref/pr_pos_top.php*/
+    overflow-y: auto;
+
+}
+
+body{
+    background-color:#FFFFFF;
+}
+
+/* ----------------- Class CSS ----------------- */
+
+
+.dataForm{
+    display: flex;
+    justify-content: left;
+    align-items: center;
+}
+
+.days{
+    text-align: center;
+    vertical-align: middle;
+}
+
+.headerBG{
+    background-color: #e6e6e6;
+}
+
+.footerBG{
+    background-color: #e6e6e6;
+}
+
+.ordered-List-item-font{
+    font-size:22px;
+}
+
+.signUpForm{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.temps-table{
+    max-height: 250px;  /*prevent table from stretching to bottom of screen*/
+    overflow: auto;
+}
+
+.temps{
+    text-align: center;
+    vertical-align: middle;
+}
+
+.nbMenuItem{
+    font-size:25px;
+    padding-right: 20px;
+    padding-left: 20px;
+}
+
+.notes{
+    font-size:20px;
+}
+
+/* ----------------- ID CSS ----------------- */
+
+
+
+
+/* -----------------Underline Animation CSS -----------------*/
+.hover-underline-animation {
+    display: inline-block;
+    position: relative;
+    /*color: #0087ca;*/
+  }
+  
+.hover-underline-animation:after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #595959;
+    /*transform-origin: bottom right;*/
+    transition: transform 0.35s ease-out;
+}
+  
+.hover-underline-animation:hover:after {
+    transform: scaleX(1);
+    /*transform-origin: bottom left;*/
+}
