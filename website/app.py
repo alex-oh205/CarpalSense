@@ -3,10 +3,10 @@
 # Coded By:  Alex Oh
 
 # Flask app to test sending user's Firebase information to Flask & writing sample data usign Pyrebase4
-
+import pyrebase
 from flask import Flask, render_template, url_for, request, jsonify
 from datetime import datetime
-import pyrebase
+
 
 app = Flask(__name__)       # Creates the app
 
@@ -37,6 +37,16 @@ def dashboard():            # Returns the dashboard page
 @app.route("/problem")      # Problem page route
 def problem():              # Returns the problem page
     return render_template("problem.html")      
+
+# Register page
+@app.route("/register")      # Register page route
+def register():              # Returns the register page
+    return render_template("register.html") 
+
+# Sign in page
+@app.route("/signIn")      # Sign in page route
+def signIn():              # Returns the sign in page
+    return render_template("signIn.html") 
 
 # Route to test Pyrebase setup and transfer Arduino data to Firebase
 @app.route('/test', methods=['GET', 'POST'])
@@ -99,4 +109,4 @@ def test():
 if __name__ == "__main__":
 
     # Run app through port 5000 on local dev
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='10.55.118.184', port=5000)

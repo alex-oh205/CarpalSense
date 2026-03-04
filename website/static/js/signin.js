@@ -102,13 +102,13 @@ function logIn(user, fbcfg) {
 
     // Session storage is temporary (only while browser session is active)
     // Information saved as string (must convert JS object to string)
-    // Session storage will be cleared with a signOut() function in home.js
+    // Session storage will be cleared with a signOut() function in dashboard.js
     if (!keepLoggedIn) {
         sessionStorage.setItem('user', JSON.stringify(user))
     }
 
     // Local storage is permanent (keep user logged in even if browser is closed)
-    // Local storage will be cleared with signOut() function in home.js
+    // Local storage will be cleared with signOut() function in dashboard.js
     else {
         localStorage.setItem('keepLoggedIn', 'yes');
         localStorage.setItem('user', JSON.stringify(user));
@@ -122,5 +122,5 @@ function logIn(user, fbcfg) {
     });
 
     // alert(fbcfg)                 // For debug only
-    window.location = "home";       // Redirect browser to home.html
+    window.location = "dashboard";       // Redirect browser to dashboard.html
 }

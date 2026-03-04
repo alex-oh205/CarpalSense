@@ -55,7 +55,7 @@ document.getElementById("submitData").onclick = function() {
     // Add user account info to realtime database
     // 'set' will create a new reference or completely replace an existing one
     set(ref(db, 'users/' + user.uid + '/accountInfo'), {
-      uid: user.uid,  // Save the userID for home.js reference
+      uid: user.uid,  // Save the userID for dashboard.js reference
       email: email,
       firstname: firstName,
       lastname: lastName
