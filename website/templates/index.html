@@ -1,15 +1,14 @@
 {% extends 'layout.html' %}
 
-{% block index_nav_links %}
-    <li class="nav-item nbMenuItem">
-        <a href="{{ url_for('register') }}" class="nav-link hover-underline-animation">Sign Up</a>
-    </li>
-    <li class="nav-item nbMenuItem">
-        <a href="{{ url_for('signIn') }}" class="nav-link hover-underline-animation">Sign In</a>
-    </li>
-{% endblock index_nav_links %}
-
-{% block index_overview %}
+{% block main %}
+    <!-- Banner -->
+    <section class="banner text-left text-light">
+        <div class="container">
+            <h1 class="display-5 fw-bold">CarpalSense</h1>
+            <p class="col-md-8 fs-4">The future of carpal tunnel prevention and hand health.</p>
+        </div>
+    </section>
+    
     <!--Overview -->
     <section class="bg-white text-dark p-2 text-left">
         <div class="container">
@@ -24,4 +23,4 @@
             <hr><br> <!-- Horizontal line and line break -->
         </div>
     </section>
-{% endblock index_overview %}
+{% endblock main %}

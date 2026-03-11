@@ -36,13 +36,9 @@
     </header>
 
     <!-- Page Content -->
-    {% block index_overview %} {% endblock index_overview %}
-    {% block register %} {% endblock register %}
-    {% block signIn %} {% endblock signIn %}
-    {% block dashboard %} {% endblock dashboard %}
-    {% block problem %} {% endblock problem %}
-    {% block design %} {% endblock design %}
-    {% block about %} {% endblock about %}
+    <main>
+        {% block main %} {% endblock main %}
+    </main>
     
     <!-- Footer -->
     {% include 'includes/_footer.html' %}

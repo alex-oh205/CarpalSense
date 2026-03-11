@@ -4,7 +4,7 @@
     <script type="module" src="{{ url_for('static', filename='/js/home.js') }}"></script>
 {% endblock dashboard_scripts %}
 
-{% block dashboard_nav_links %}
+<!-- {% block dashboard_nav_links %}
     <li class="nav-item nbMenuItem">
         <a id="userLink" class="nav-link" href="">User Name</a>
     </li>
@@ -12,9 +12,9 @@
         <a id="signOut" class="nav-link hover-underline-animation"
            href="{{ url_for('signIn') }}?next={{ request.path }}">Sign Out</a>
     </li>
-{% endblock dashboard_nav_links %}
+{% endblock dashboard_nav_links %} -->
 
-{% block dashboard %}
+{% block main %}
     <div class="container">
         <br><br>
         <h1 id = "welcome"></h1><br><br>
@@ -306,4 +306,4 @@
             </form>       
         </div>
     </div><br>
-{% endblock dashboard %}
+{% endblock main %}

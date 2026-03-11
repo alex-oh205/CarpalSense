@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light headerBG">
+<nav class="navbar navbar-expand-md fixed-top background-color-dark navbar-dark nav-align py-0">
     <!-- lg = large breakpoint, headerBG = custom css BG color -->
     <div class="container"> <!-- Container will contain content in certain space in middle of page -->
         <a href="{{ url_for('index') }}" class="navbar-brand">
@@ -6,16 +6,38 @@
         </a>
 
         <!-- Hamburger Menu Button-->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <div class="d-flex align-items-center">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <h1 class="d-inline-block align-text-top text-light nbTitle">CarpalSense</h1>
+        </div>
 
         <!-- Collapsible navbar menu with custom hover underline CSS animation -->
         <div class="collapse navbar-collapse" id="navmenu">
             <!-- Links to hamburger menu button -->
-            <ul class="navbar-nav ms-auto">
-                {% block index_nav_links %}{% endblock index_nav_links %}
-                {% block dashboard_nav_links %}{% endblock dashboard_nav_links %}
+            <ul id="navList" class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a href="{{ url_for('index') }}" class="text-light nav-link hover-underline-animation nbMenuItem px-3">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('dashboard') }}" class="text-light nav-link hover-underline-animation nbMenuItem px-3">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('problem') }}" class="text-light nav-link hover-underline-animation nbMenuItem px-3">Problem</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('design') }}" class="text-light nav-link hover-underline-animation nbMenuItem px-3">Design</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('about') }}" class="text-light nav-link hover-underline-animation nbMenuItem px-3">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('register') }}" class="text-light nav-link hover-underline-animation nbMenuItem px-3">Sign Up</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('signIn') }}" class="text-light nav-link hover-underline-animation nbMenuItem px-3">Sign In</a>
+                </li>
             </ul>
         </div>
     </div>
