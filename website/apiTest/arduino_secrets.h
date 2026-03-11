@@ -1,2 +1,2 @@
-#define SECRET_SSID "AlexO"
-#define SECRET_PASS "oh2057522"
+#define SECRET_SSID "Def not shiv's phone"
+#define SECRET_PASS "Shiv2048"
