@@ -33,11 +33,20 @@ Instructions:
 #include "arduino_secrets.h"  // Used to store private network info
 
 // Define global variables and constants for the circuit & sensor
-const int trigPin = 2; // attach pin D2 Arduino to pin Trig of HC-SR04
-const int echoPin = 3; // attach pin D3 Arduino to pin Echo of HC-SR04
-long distance;         // long variable for distance value
-long duration;         // long variable for duration value
+const int   FLEX_PIN    = A6;       // Data Output
+const float VCC         = 3.3;      // Voltage Input
+const float R_DIV       = 47000.0;  // 47KΩ divider resistor
 
+// Resistance Range
+const float R_FLAT = 25000.0;   // ~25KΩ; unflexed
+const float R_BENT = 100000.0;  // ~100KΩ; fully bent
+
+// Calibration; Adjust values based off positions
+int rawFlat = 17;  // Reading when fully flat
+int rawBent = 28;  // Reading when fully bent
+
+//Percentage of Bending
+float bend;
 
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;    // your network SSID (name)
@@ -57,10 +66,10 @@ const unsigned long postingInterval = 10L * 50L; // delay between updates, in mi
 
 void setup(){
   
-  Serial.begin(9600); // Start serial monitor
-
-  pinMode(trigPin, OUTPUT); // Sets the trigPin as an OUTPUT
-  pinMode(echoPin, INPUT); // Sets the echoPin as an INPUT
+  Serial.begin(9600);      //
+  pinMode(FLEX_PIN, INPUT);
+  Serial.println("Adafruit Short Flex Sensor");
+  Serial.println("Raw | Voltage | Resistance | Bend% | Zone");
 
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
@@ -118,7 +127,7 @@ void httpRequest() {
   client.stop();
 
   // call range() function to get distance
-  range();  
+  flex();  
   
   // if there's a successful connection:
   if (client.connect(server, 5000)) {
@@ -128,7 +137,7 @@ void httpRequest() {
     // The Flask route to call should be inbetween the "/" and "?" (ex:  GET /test?...
     // where "test" is the Flask route that will GET the data, "distance" is the key
     // and the value is provided by:  String(distance))
-    String request = "GET /test?distance=" + String(distance) + " HTTP/1.1";
+    String request = "GET /test?bend=" + String(bend) + " HTTP/1.1";
     client.println(request);
 
     // set the host as server IP address
@@ -159,13 +168,40 @@ void printWifiStatus(){
   Serial.println(" dBm");
 }
 
-// collect distance values
-void range(){
-  digitalWrite(trigPin, LOW);         // set trigPin LOW to clear it 
-  delayMicroseconds(2);               // 2 microsecond delay
-  digitalWrite(trigPin, HIGH);        // set trigPin HIGH  
-  delayMicroseconds(10);              // 10 microsecond delay
-  digitalWrite(trigPin, LOW);         // set trigPin LOW      
-  duration = pulseIn(echoPin, HIGH);  // set trigPin HIGH
-  distance = duration * 0.034 / 2;    // distance (cm) calculation
+// collect FlexSensor Values
+void flex(){
+  // 1. Read raw ADC (0–1023)
+  int raw = analogRead(FLEX_PIN);
+
+  // 2. Convert to voltage
+  float voltage = raw * (VCC / 1023.0);
+
+  // 3. Solve voltage divider for flex resistance
+  //    Vout = VCC * R_DIV / (R_flex + R_DIV)
+  float resistance = 0;
+  if (voltage > 0) {
+    resistance = R_DIV * (VCC / voltage - 1.0);
+  }
+
+  // 4. Map raw ADC to 0–100% bend
+  bend = constrain((raw - rawFlat) / (float)(rawBent - rawFlat) * 100.0, 0.0, 100.0);
+  
+  // 5. Human-readable zone
+  const char* zone;
+  if      (bend < 20) zone = "Flat";
+  else if (bend < 50) zone = "Slight";
+  else if (bend < 80) zone = "Moderate";
+  else                zone = "Full";
+  // 6. Print results
+  Serial.println("=======FLEX SENSOR=======");
+  Serial.print(raw);
+  Serial.print("|");
+  Serial.print(voltage, 2);
+  Serial.print("V|");
+  Serial.print(resistance / 1000.0, 1);
+  Serial.print("KΩ|");
+  Serial.print((int)bend);
+  Serial.print("%|");
+  Serial.println(zone);
+  delay(1000);
 }
