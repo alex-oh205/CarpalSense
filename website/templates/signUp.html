@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block scripts %}
+    <script type="module" src="{{ url_for('static', filename='/js/signUp.js') }}"></script>
+{% endblock scripts %}
+
+{% block main %}
+    <!-- Heading -->
+    <section class="text-left">
+        <div class="container">
+            <br>
+            <h1>Sign Up</h1>
+            <hr>
+        </div>
+    </section>
+
+    <!--Sign Up -->
+    <section class="signUp">
+        <div class="container-sm signUpForm">
+            <br>
+            <form>
+                <input type="text" placeholder="First name" id="firstName" class="form-control mb-3">
+                <input type="text" placeholder="Last name" id="lastName" class="form-control mb-3">
+                <input type="email" placeholder="Email" id="userEmail" class="form-control mb-3">
+                <input type="password" placeholder="Password" id="userPass" class="form-control mb-3">
+                <button type = "button" id="submitData" name="submitData" class="btn btn-primary mb-3 w-100">Sign Up</button>
+                <a href="{{ url_for('signIn') }}" class="badge bg-secondary py-1 w-100">Already have an account?</a>
+            </form>
+        </div>
+    </section>
+{% endblock main %}

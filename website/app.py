@@ -38,12 +38,12 @@ def dashboard():            # Returns the dashboard page
 def problem():              # Returns the problem page
     return render_template("problem.html")      
 
-# Register page
-@app.route("/register")      # Register page route
-def register():              # Returns the register page
-    return render_template("register.html") 
+# Sign Up page
+@app.route("/signUp")      # Sign Up page route
+def signUp():              # Returns the sign up page
+    return render_template("signUp.html") 
 
-# Sign in page
+# Sign In page
 @app.route("/signIn")      # Sign in page route
 def signIn():              # Returns the sign in page
     return render_template("signIn.html") 
@@ -109,4 +109,4 @@ def test():
 if __name__ == "__main__":
 
     # Run app through port 5000 on local dev
-    app.run(debug=False, host='10.55.118.184', port=5000)
+    app.run(debug=False, host='127.0.0.1', port=5000)

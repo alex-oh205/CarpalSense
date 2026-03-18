@@ -206,12 +206,12 @@ window.onload = function() {
     userLink.innerText = "Create New Account";
     userLink.classList.replace("nav-link", "btn");
     userLink.classList.add("btn-primary");
-    userLink.href = "register.html";
+    userLink.href = "{{ url_for('signUp') }}";
 
     signOutLink.innerText = "Sign In";
     signOutLink.classList.replace("nav-link", "btn");
     signOutLink.classList.add("btn-success");
-    signOutLink.href = "signIn.html";
+    signOutLink.href = "{{ url_for('signIn') }}";
   } else {
     userLink.innerText = currentUser.firstname;
     welcome.innerText = "Welcome " + currentUser.firstname;

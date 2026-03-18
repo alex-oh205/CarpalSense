@@ -6,8 +6,56 @@ table th{
 
 }
 
-body{
-    background-color:#FFFFFF;
+.background-color-dark {                    /* navbar and footer background color */
+    background-color: #2c3e50;
+}
+
+.banner {                                   /* home page banner */
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('img/economy.jpg');
+    background-size: cover;
+    background-position: center;
+    padding: 100px 50px;
+}
+
+.banner h1 {                                /* banner title animation */
+    transform: translateX(-2%);
+    opacity: 0;
+    animation: slideInFromLeft 1.5s ease-out 0.1s forwards;
+}
+
+.banner p {                                 /* banner description animation */
+    transform: translateX(-2%);
+    opacity: 0;
+    animation: slideInFromLeft 1.5s ease-out forwards;
+}
+
+@keyframes slideInFromLeft {                /* defines slideInFromLeft used above */
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+body {                                      /* defines margins for body */
+    margin-top: 64px;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 64px);
+    overflow-x: hidden;
+}
+
+main {
+    flex: 1;
+}
+
+.card-animation {                           /* shadow for bootstrap cards */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card-animation:hover {                     /* animation for bootstrap card hover */
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* ----------------- Class CSS ----------------- */
@@ -22,10 +70,6 @@ body{
 .days{
     text-align: center;
     vertical-align: middle;
-}
-
-.headerBG{
-    background-color: #e6e6e6;
 }
 
 .footerBG{
@@ -52,10 +96,36 @@ body{
     vertical-align: middle;
 }
 
-.nbMenuItem{
-    font-size:25px;
-    padding-right: 20px;
-    padding-left: 20px;
+.nav-align {                                /* navbar alignment */
+    padding: 10px;
+}
+
+.navbar-toggler {                           /* hamburger menu button */
+    height: 64px;
+    border: none !important;
+    border-radius: 0 !important;
+    transition: background-color 0.3s;
+}
+
+.navbar-toggler:hover {                     /* hamburger button hover color */
+    background-color: #1a252f !important;
+}
+
+.navbar-toggler:focus {                     /* mouse click on the hamburger button */
+    outline: none !important;
+    box-shadow: none !important;
+    background-color: #1a252f !important;
+}
+
+.nbMenuItem {                               /* navbar menu item css */
+    background-color: #2c3e50;
+    transition: background-color 0.3s;
+    padding: 20px 20px;
+    width: 100%;
+}
+
+.nbMenuItem:hover {                         /* hover animation for navbar menu */
+    background-color: #1a252f;
 }
 
 .notes{
@@ -76,19 +146,46 @@ body{
     padding-right: 8rem;
 }
 
+.logo img {                                 /* home page button logo */
+    width: auto;
+    height: 50px;
+}
+
+.logo:hover img {                           /* home page button animation */
+    animation: slotMachine 0.5s ease-out;
+}
+
+@keyframes slotMachine {                    /* animation for above, image swipes up then appears from bottom */
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    51% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ----------------- ID CSS ----------------- */
 
 
 
 
 /* -----------------Underline Animation CSS -----------------*/
-.hover-underline-animation {
-    display: inline-block;
+.hover-underline-animation {                /* navbar hover */
     position: relative;
-    /*color: #0087ca;*/
-  }
-  
-.hover-underline-animation:after {
+    display: inline-block;
+}
+
+.hover-underline-animation::after {         /* animation for navbar hover */
     content: '';
     position: absolute;
     width: 100%;
@@ -96,12 +193,25 @@ body{
     height: 2px;
     bottom: 0;
     left: 0;
-    background-color: #595959;
-    /*transform-origin: bottom right;*/
-    transition: transform 0.35s ease-out;
+    background-color: #fff;
+    transform-origin: bottom center;
+    transition: transform 0.25s ease-out;
 }
-  
-.hover-underline-animation:hover:after {
+
+.hover-underline-animation:hover::after {   /* scale when hovered */
     transform: scaleX(1);
-    /*transform-origin: bottom left;*/
+}
+
+@media only screen and (max-width: 768px) {
+    .hover-underline-animation::after {
+        width: 2px;
+        height: 100%;
+        transform-origin: left center;
+        transform: scaleY(0);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .hover-underline-animation:hover::after {
+        transform: scaleY(1);
+    }
 }
