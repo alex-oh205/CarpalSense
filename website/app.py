@@ -109,4 +109,4 @@ def test():
 if __name__ == "__main__":
 
     # Run app through port 5000 on local dev
-    app.run(debug=False, host='127.0.0.1', port=5000)
+    app.run(debug=False, host='172.20.10.6', port=5000)
