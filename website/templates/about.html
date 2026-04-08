@@ -6,7 +6,33 @@
 
 {% block main %}
 <div class="overview text-dark text-left">
-    <h1 class="text-center mt-4">About Us</h1>
-    <p class="text-center mt-3">This section contains information about the purpose and mission of our Firebase Demo site.</p>
+
+    <!--Title-->
+    <h1 class="text-center mt-5">About Us</h1>
+    <br>
+    <br>
+    <br>
+
+    <!--Team Section-->
+    <div style="background-color: #e8e4de;">
+        <br>
+        <div class="d-flex flex-row gap-5 w-75 mx-auto py-5">
+            <img src="{{url_for('static', filename = 'img/team_placeholder.jpg')}}" alt="Team Image" class="d-block mx-auto mt-5 rounded-4 border border-3 w-75" style="width: 50%; height: auto;">
+            <div class="d-flex flex-column" style="width: 50%;">
+                <h5 class="mt-5"><strong>Our Team</strong></h5>
+                <p class="mt-3">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos. Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+            </div>
+        </div>
+        <br>
+        <br>
+        <br>
+    </div>
+    
+
+    <!--Shiv-->
+    <div class="d-flex">
+        <img src="{{url_for('static', filename = 'img/person_placeholder.jpg')}}" alt="Team Image" class="d-block rounded-4 border border-3" style="height: 75vh">
+    </div>
+
 </div>
 {% endblock main %}
