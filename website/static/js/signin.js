@@ -34,71 +34,58 @@ const db = getDatabase();
 
 // ---------------------- Sign-In User ---------------------------------------//
 
-document.getElementById('signIn').onclick = function() {
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('signIn').onclick = async function() {
 
-    // Get user's email and password for signing in
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    console.log(email, password);
+      // Get user's email and password for signing in
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      console.log(email, password);
 
-    // Attempt to sign in the user
-    signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            // Create user credential and store the user ID
-            const user = userCredential.user;
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
-            // Get the ID token and add to firebase configuration
-            // User ID token is used by the Flask server to let Firebase know that it has
-            //   permission to read/write data to the current user's account.
-            user.getIdToken(/* forceRefresh */ true).then((idToken) => {
-                // console.log("ID Token:", idToken);
-                // Update the Firebase configuration so that it can be sent to the Flask server
-                firebaseConfig.idToken = idToken;
-                firebaseConfig.userID = user.uid;
-            }).catch((error) => {
-                // Handle error getting token
-                console.log("Error getting ID token:", error);
-            });
-            
-            // Log sign-in date in the database
-            // 'update' will only add the last_login info and won't overwrite everything
-            let logDate = new Date();
-            update(ref(db, 'users/' + user.uid + '/accountInfo'), {
-                last_login: logDate,
-            })
-            .then(() => {
-                // User signed in successfully
-                alert('User signed in successfully!');
+        // Get the ID token and add to firebase configuration
+        // User ID token is used by the Flask server to let Firebase know that it has
+        // permission to read/write data to the current user's account.
+        const idToken = await user.getIdToken(/* forceRefresh */ true);
+        const backendConfig = {
+          ...firebaseConfig,
+          idToken,
+          currentUser: user.uid  // Keep uid for Firebase operations
+        };
 
-                // Get snapshot of all the user information that will be passed
-                // to the login() function and stored in either session or local storage
-                // snapshot - copy of a system's state at a specific point in time
-                get(ref(db, 'users/' + user.uid + '/accountInfo')).then((snapshot) => {
-                    if (snapshot.exists()) {
-                        console.log(snapshot.val());
-                        logIn(snapshot.val(), firebaseConfig);
-                    } else {
-                        console.log('User does not exist');
-                    }
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
-            })
-            .catch((error) => {
-                console.log(error);
-            })
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            console.log(errorMessage);
+        // Log sign-in date in the database
+        // 'update' will only add the last_login info and won't overwrite everything
+        let logDate = new Date();
+        await update(ref(db, 'users/' + user.uid + '/accountInfo'), {
+            last_login: logDate,
         });
-}
+
+        alert('User signed in successfully!');
+
+        // Get snapshot of all the user information that will be passed
+        // to the login() function and stored in either session or local storage
+        // snapshot - copy of a system's state at a specific point in time
+        const snapshot = await get(ref(db, 'users/' + user.uid + '/accountInfo'));
+        if (snapshot.exists()) {
+            console.log(snapshot.val());
+            let userData = snapshot.val();
+            userData.uid = user.uid; // Add the Firebase user ID to the user data
+            logIn(userData, backendConfig);
+        } else {
+            console.log('User does not exist');
+        }
+      } catch (error) {
+        console.log(error.message || error);
+      }
+    };
+});
 
 // ---------------- Keep User Logged In ----------------------------------//
-function logIn(user, fbcfg) {
-    let keepLoggedIn = document.getElementById('keepLoggedInSwitch').ariaChecked;
+async function logIn(user, fbcfg) {
+    let keepLoggedIn = document.getElementById('keepLoggedInSwitch').checked;
 
     // Session storage is temporary (only while browser session is active)
     // Information saved as string (must convert JS object to string)
@@ -114,13 +101,23 @@ function logIn(user, fbcfg) {
         localStorage.setItem('user', JSON.stringify(user));
     }
 
-    // Send Firebase config. and userID to app.py using POST
-    fetch('/test', {
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "body": JSON.stringify(fbcfg)
-    });
+    // Send Firebase config and user ID to app.py using POST
+    const payload = { ...fbcfg, currentUser: user };
+    try {
+      const response = await fetch('/data', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
 
-    // alert(fbcfg)                 // For debug only
-    window.location = "dashboard";       // Redirect browser to dashboard.html
+      if (!response.ok) {
+        console.error('Failed to send login info to server:', await response.text());
+        return;
+      }
+    } catch (error) {
+      console.error('Error sending login info to server:', error);
+      return;
+    }
+
+    window.location = "/dashboard";       // Redirect browser to dashboard.html
 }

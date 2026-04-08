@@ -1,5 +1,9 @@
 {% extends 'layout.html' %}
 
+{% block scripts %}
+    <script type="module" src="{{ url_for('static', filename='/js/index.js') }}"></script>
+{% endblock scripts %}
+
 {% block main %}
     <!-- Banner -->
     <section class="banner text-left text-light">

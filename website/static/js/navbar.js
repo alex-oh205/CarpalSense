@@ -26,7 +26,6 @@ const auth = getAuth();
 let signInLink = document.getElementById('signInLink');   // Sign in link
 let signUpLink = document.getElementById('signUpLink'); // Sign up link
 let userDropdown = document.getElementById('userDropdown'); // User profile dropdown
-let welcome = document.getElementById('welcome');     // Welcome header
 window.currentUser = null; // Initialize currentUser globally
 
 // ----------------------- Get User's Name ------------------------------//
@@ -43,33 +42,36 @@ function getUsername() {
   }
 }
 
+// Initialize currentUser immediately when script loads
+getUsername();
+
 // Sign-out function that will remove user info from local/session storage and
 // sign-out from FRD
 window.signOutUser = function() {
-  sessionStorage.removeItem('user');  // Clear session storage
-  localStorage.removeItem('user');    // Clear local storage
+  // Clear client-side storage first
+  sessionStorage.removeItem('user');
+  localStorage.removeItem('user');
   localStorage.removeItem('keepLoggedIn');
 
+  // Sign out from Firebase and then redirect
   signOut(auth).then(() => {
-    // Sign out successful
+    // Firebase sign out successful, now redirect
+    window.location = "/logout";
   }).catch((error) => {
-    // Error occurred
+    console.error('Firebase sign out error:', error);
+    // Still redirect even if Firebase sign out fails
+    window.location = "/logout";
   });
-
-  window.location = "/signIn";
 };
 
 // --------------------------- Navbar Initialization -----------------------------//
 
 function initNavbar() {
-  // Get current user's first name
-  getUsername();
   if (window.currentUser == null) {
     if (signInLink) signInLink.hidden = false;
     if (signUpLink) signUpLink.hidden = false;
     if (userDropdown) userDropdown.hidden = true;
   } else {
-    if (welcome) welcome.innerText = "Welcome " + window.currentUser.firstname;
     if (userDropdown) {
       document.getElementById('profileDropdown').textContent = window.currentUser.firstname;
       userDropdown.hidden = false;
@@ -80,4 +82,4 @@ function initNavbar() {
 }
 
 // Run on page load
-window.addEventListener('load', initNavbar);
+window.addEventListener('DOMContentLoaded', initNavbar);

@@ -4,7 +4,7 @@
 
 # Flask app to test sending user's Firebase information to Flask & writing sample data usign Pyrebase4
 import pyrebase
-from flask import Flask, render_template, url_for, request, jsonify
+from flask import Flask, render_template, url_for, request, jsonify, redirect
 from datetime import datetime
 
 
@@ -12,6 +12,8 @@ app = Flask(__name__)       # Creates the app
 
 config = {}
 key = 0
+currentUser = None
+idToken = None
 
 # Index page
 @app.route("/")             # Index page route
@@ -48,10 +50,24 @@ def signUp():              # Returns the sign up page
 def signIn():              # Returns the sign in page
     return render_template("signIn.html") 
 
-# Route to test Pyrebase setup and transfer Arduino data to Firebase
-@app.route('/test', methods=['GET', 'POST'])
-def test():
-    global config, userID, db, timeStamp, key, idToken
+# Logout route
+@app.route("/logout")
+def logout():
+    global currentUser, idToken, config, key
+    currentUser = None
+    idToken = None
+    config = {}
+    key = 0
+    return redirect(url_for('signIn'))
+
+@app.context_processor
+def inject_globals():
+    return dict(currentUser=currentUser)
+
+# Route to Pyrebase setup and transfer Arduino data to Firebase
+@app.route('/data', methods=['GET', 'POST'])
+def data():
+    global config, currentUser, db, timeStamp, key, idToken
 
     # POST request (FB configuration sent from login.js, request.method defaults to GET)
     if request.method == 'POST':
@@ -60,16 +76,19 @@ def test():
         # Get time stamp to be used as firebase node
         timeStamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
-        # Receive Firebase configuration credentials, pop uid and assign to userID
+        # Receive Firebase configuration credentials, pop user ID and idToken
         config = request.get_json()
-        userID = config.pop('userID')
-        idToken = config.pop('idToken')
+        currentUser = config.pop('currentUser', None)
+        idToken = config.pop('idToken', None)
+
+        if not currentUser or not idToken:
+            return 'Missing authentication payload', 400
         
         # Output to a console (or file) is normally buffered (stored) until it is
         # forced out by the printing of a newline. Flush will force the information
         # in the buffer to be printed immediately.
 
-        print('User ID: ' + userID, flush=True)     # Debug only
+        print('User ID: ' + currentUser['uid'], flush=True)     # Debug only
         print(config, flush=True)                   # Debug only
         print('ID Token: ' + idToken, flush=True)   # Debug only
 
@@ -80,25 +99,25 @@ def test():
         db = firebase.database()
 
         # Write sample data to FB to test connection
-        db.child('users/' + userID + '/data/' + timeStamp).update({'testKey': 'testValue'}, idToken)
+        # db.child('users/' + currentUser['uid'] + '/data/' + timeStamp).update({'testKey': 'testValue'}, idToken)
 
         return 'Success', 200
     
     # If a GET request is made, check to see if the FB configuration has been provided. If not,
     # do nothing. If so, update the Firebase with the sensor data.
     else:
-        if not config:
-            print("FB config is empty")
+        if not config or not currentUser:
+            print("FB config is empty or user is not signed in")
         else:
             # Take parameters from Arduino request & assign value to variable "value"
 
             # print(config)
-            value = request.args.get('distance')
+            value = request.args.get('bend')
 
-            print('Distance: ' + value, flush=True)
+            print('Bend: ' + value, flush=True)
             
             # Write Arduino data to Firebase
-            db.child('users/' + userID + '/data/' + timeStamp).update({key:value}, idToken)
+            db.child('users/' + currentUser['uid'] + '/data/bend').update({key:value}, idToken)
 
             # Increment key
             key += 1
@@ -109,4 +128,4 @@ def test():
 if __name__ == "__main__":
 
     # Run app through port 5000 on local dev
-    app.run(debug=False, host='172.20.10.6', port=5000)
+    app.run(debug=False, port=5000)

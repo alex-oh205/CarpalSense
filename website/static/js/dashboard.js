@@ -33,127 +33,256 @@ const auth = getAuth();
 const db = getDatabase();
 
 // ---------------------// Get reference values -----------------------------
-
-let welcome = document.getElementById('welcome');     // Welcome header
+let sensorChart = null;                               // Chart instance reference
 
 // ------------------------Set (insert) data into FRD ------------------------
-function setData(userID, year, month, day, temperature) {
-  // Must use brackets around variable names to use it as a key
-  set(ref(db, 'users/' + userID + '/data/' + year + '/' + month), {
-    [day]: temperature
-  })
-  .then(() => {
-    alert("Data stored successfully.");
-  })
-  .catch((error) => {
-    alert("There was an error. Error: " + error);
-  });
-}
+// function setData(userID, dataType, index, value) {
+//   // Must use brackets around variable names to use it as a key
+//   set(ref(db, 'users/' + userID + '/data/' + dataType + '/' + index), {
+//     [index]: value
+//   })
+//   .then(() => {
+//     alert("Data stored successfully.");
+//   })
+//   .catch((error) => {
+//     alert("There was an error. Error: " + error);
+//   });
+// }
 
 // -------------------------Update data in database --------------------------
-function updateData(userID, year, month, day, temperature) {
-  // Must use brackets around variable names to use it as a key
-  update(ref(db, 'users/' + userID + '/data/' + year + '/' + month), {
-    [day]: temperature
-  })
-  .then(() => {
-    alert("Data stored successfully.");
-  })
-  .catch((error) => {
-    alert("There was an error. Error: " + error);
-  });
-}
+// function updateData(userID, dataType, index, value) {
+//   // Must use brackets around variable names to use it as a key
+//   update(ref(db, 'users/' + userID + '/data/' + dataType + '/' + index), {
+//     [index]: value
+//   })
+//   .then(() => {
+//     alert("Data stored successfully.");
+//   })
+//   .catch((error) => {
+//     alert("There was an error. Error: " + error);
+//   });
+// }
 
 // ----------------------Get a datum from FRD (single data point)---------------
-function getData(userID, year, month, day) {
-  let yearVal = document.getElementById('yearVal');
-  let monthVal = document.getElementById('monthVal');
-  let dayVal = document.getElementById('dayVal');
-  let tempVal = document.getElementById('tempVal');
+// function getData(userID, dataType, index) {
+//   let dataTypeVal = document.getElementById('dataTypeVal');
+//   let indexVal = document.getElementById('indexVal');
+//   let sensorVal = document.getElementById('sensorVal');
 
-  const dbref = ref(db); // Firebase parameter for getting data
+//   const dbref = ref(db); // Firebase parameter for getting data
 
-  // Provide the path through the nodes to the data
-  get(child(dbref, 'users/' + userID + '/data/' + year + '/' + month))
-    .then((snapshot) => {
-      if (snapshot.exists()) {
-        yearVal.textContent = year;
-        monthVal.textContent = month;
-        dayVal.textContent = day;
+//   // Provide the path through the nodes to the data
+//   get(child(dbref, 'users/' + userID + '/data/' + dataType + '/' + index))
+//     .then((snapshot) => {
+//       if (snapshot.exists()) {
+//         dataTypeVal.textContent = dataType;
+//         indexVal.textContent = index;
         
-        // To get specific value from the provided key: snapshot.val()[key]
-        tempVal.textContent = snapshot.val()[day];
-      } else {
-        alert('No data found.');
-      }
-    })
-    .catch((error) => {
-      alert('Unsuccessful, error: ' + error);
-    });
-}
+//         // To get specific value from the provided key: snapshot.val()[key]
+//         sensorVal.textContent = snapshot.val()[index];
+//       } else {
+//         alert('No data found.');
+//       }
+//     })
+//     .catch((error) => {
+//       alert('Unsuccessful, error: ' + error);
+//     });
+// }
 
-// ---------------------------Get a month's data set --------------------------
+// ---------------------------Get a data set --------------------------
 // Must be an async function because you need to get all the data from FRD
 // before you can process it for a table or graph
-async function getDataSet(userID, year, month) {
-  let yearVal = document.getElementById('setYearVal');
-  let monthVal = document.getElementById('setMonthVal');
-
-  yearVal.textContent = `Year: ${year}`;
-  monthVal.textContent = `Month: ${month}`;
-
-  const days = [];
-  const temps = [];
-  const tbodyEl = document.getElementById('tbody-2'); // Select <tbody> element
+async function getDataSet(userID, dataType) {
+  const indexes = [];
+  const values = [];
 
   const dbref = ref(db); // Firebase parameter to access database
 
   // Wait for all data to be pulled from FRD
   // Must provide the path through the nodes
-  await get(child(dbref, 'users/' + userID + '/data/' + year + '/' + month)).then((snapshot) => {
+  await get(child(dbref, 'users/' + userID + '/data/' + dataType)).then((snapshot) => {
     if (snapshot.exists()) {
       console.log(snapshot.val());
 
       snapshot.forEach(child => {
         console.log(child.key, child.val());
         // Push values to the corresponding arrays
-        days.push(child.key);
-        temps.push(child.val());
+        indexes.push(child.key);
+        values.push(child.val());
       });
     } else {
-      alert('No data found');
+      // alert('No data found');
     }
   })
   .catch((error) => {
     alert('Unsuccessful, error: ' + error);
   });
 
-  // Dynamically add table rows to HTML using string interpolation
-  tbodyEl.innerHTML = '';  // Clear any existing table
-  for (let i = 0; i < days.length; i++) {
-    addItemToTable(days[i], temps[i], tbodyEl);
-  }
+  return indexes.map((index, i) => ({ x: index, y: values[i] })); // Return array of objects with x and y values for graphing
 }
 
 // Add a item to the table of data
-function addItemToTable(day, temp, tbody) {
-  console.log(day, temp);
-  let tRow = document.createElement("tr");
-  let td1 = document.createElement("td");
-  let td2 = document.createElement("td");
+// function addItemToTable(day, temp, tbody) {
+//   console.log(day, temp);
+//   let tRow = document.createElement("tr");
+//   let td1 = document.createElement("td");
+//   let td2 = document.createElement("td");
 
-  td1.innerHTML = day;
-  td2.innerHTML = temp;
+//   td1.innerHTML = day;
+//   td2.innerHTML = temp;
 
-  tRow.appendChild(td1);
-  tRow.appendChild(td2);
+//   tRow.appendChild(td1);
+//   tRow.appendChild(td2);
 
-  tbody.appendChild(tRow);
+//   tbody.appendChild(tRow);
+// }
+
+// Function that creates a chart from sensor data
+async function createChart(dataType, id){
+  let data;
+  if (["bend", "emg", "imu"].includes(dataType)) {
+    data = await getDataSet(window.currentUser.uid, dataType);
+  }
+
+  let datasets = [];
+
+  if (dataType == "bend") {
+    datasets.push(
+      {
+        label:    `Bend %`,     // Dataset label for legend
+        data,
+        fill:     false,           // Fill area under the linechart (true = yes, false = no)
+        backgroundColor:  'rgba(255, 0, 132, 0.2)',    // Color for data marker
+        borderColor:      'rgba(255, 0, 132, 1)',      // Color for data marker border
+        borderWidth:      1   // Data marker border width
+      }
+    );
+  } else if (dataType == "emg") {
+    datasets.push(
+      {
+        label:    `EMG (mV)`,     // Dataset label for legend
+        data,
+        fill:     false,           // Fill area under the linechart (true = yes, false = no)
+        backgroundColor:  'rgba(54, 162, 235, 0.2)',    // Color for data marker
+        borderColor:      'rgba(54, 162, 235, 1)',      // Color for data marker border
+        borderWidth:      1   // Data marker border width
+      }
+    );
+  } else if (dataType == "imu") {
+    datasets.push(
+      {
+        label:    `IMU (°)`,     // Dataset label for legend
+        data,
+        fill:     false,           // Fill area under the linechart (true = yes, false = no)
+        backgroundColor:  'rgba(255, 206, 86, 0.2)',    // Color for data marker
+        borderColor:      'rgba(255, 206, 86, 1)',      // Color for data marker border
+        borderWidth:      1   // Data marker border width
+      }
+    );
+  }
+
+  const lineChart = document.getElementById(id);
+
+  return new Chart(lineChart, {  // Construct the chart    
+    type: 'line',
+    data: {                         // Define data
+      datasets
+    },
+    options: {                        // Define display chart display options 
+      responsive: true,             // Re-size based on screen size
+      maintainAspectRatio: true,
+      scales: {                     // Display options for x & y axes
+        x: {                      // x-axis properties
+          type: 'linear',
+          title: {
+            display: true,
+            text: 'Time',     // x-axis title
+            font: {                   // font properties
+              size: 14
+            },
+          },
+          ticks: {                      // x-axis tick mark properties
+            callback: function(val, index, ticks){
+              return String(val);
+            },
+            stepSize: 5,
+            font: {
+              size: 14  
+            },
+          },
+          grid: {                       // x-axis grid properties
+            color: '#6c767e'
+          }
+        },
+        y: {                              // y-axis properties
+          title: {
+            display: true,                          
+            text: `Sensor Value`,     // y-axis title
+            font: {
+              size: 14
+            },
+          },
+          ticks: {
+            // callback: function(value, index, ticks) {
+            //   return new Intl.NumberFormat('en-US', {
+            //     notation: 'compact',
+            //     maximumFractionDigits: 1
+            //   }).format(value);
+            // },
+            min: 0,                   
+            maxTicksLimit: 20,        
+            font: {
+              size: 12
+            }
+          },
+          grid: {                       // y-axis gridlines
+            color: '#6c767e'
+          }
+        }
+      },
+      plugins: {                  // Display options for title and legend
+        title: {
+            display: true,
+            text: 'Sensor Value Over Time',
+            font: {
+              size: 24,
+            },
+            color: '#black',
+            padding: {
+              top: 10,
+              bottom: 30
+            }
+        },
+        legend: {
+          align: 'start',
+          position: 'bottom',
+        },
+        tooltip: {
+          callbacks: {
+            title: function(context){
+              return String(context[0].label).replace(/,/g, ''); // Remove commas from x value
+            } 
+          }
+        }
+      }
+    }
+  });
 }
 
-// -------------------------Delete a day's data from FRD ---------------------
-function deleteData(userID, year, month, day) {
-  remove(ref(db, 'users/' + userID + '/data/' + year + '/' + month + '/' + day))
+// // -------------------------Delete a data point from FRD ---------------------
+// function deleteData(userID, dataType, index) {
+//   remove(ref(db, 'users/' + userID + '/data/' + dataType + '/' + index))
+//   .then(() => {
+//     alert('Data removed successfully');
+//   })
+//   .catch((error) => {
+//     alert('Unsuccessful, error: ' + error);
+//   });
+// }
+
+// -------------------------Delete a dataset from FRD ---------------------
+async function deleteDataSet(userID, dataType) {
+  await remove(ref(db, 'users/' + userID + '/data/' + dataType))
   .then(() => {
     alert('Data removed successfully');
   })
@@ -162,58 +291,52 @@ function deleteData(userID, year, month, day) {
   });
 }
 
-
 // --------------------------- Home Page Loading -----------------------------
-window.onload = function() {
-  // Get, Set, Update, Delete Sharkriver Temp. Data in FRD
-  // Set (Insert) data function call
-  document.getElementById('set').onclick = function() {
-    const year = document.getElementById('year').value;
-    const month = document.getElementById('month').value;
-    const day = document.getElementById('day').value;
-    const temperature = document.getElementById('temperature').value;
-    const userID = window.currentUser.uid;
-
-    setData(userID, year, month, day, temperature);
+window.addEventListener('DOMContentLoaded', function() {
+  if (!window.currentUser) {
+    const storedUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || 'null');
+    if (storedUser) {
+      window.currentUser = storedUser;
+    }
   }
 
-  // Update data function call
-  document.getElementById('update').onclick = function() {
-    const year = document.getElementById('year').value;
-    const month = document.getElementById('month').value;
-    const day = document.getElementById('day').value;
-    const temperature = document.getElementById('temperature').value;
-    const userID = window.currentUser.uid;
-
-    updateData(userID, year, month, day, temperature);
+  if (!window.currentUser) {
+    alert("No user is currently signed in. Redirecting to sign in page.");
+    window.location = "/signIn";
   }
 
-  // Get a datum function call
-  document.getElementById('get').onclick = function() {
-    const year = document.getElementById('getYear').value;
-    const month = document.getElementById('getMonth').value;
-    const day = document.getElementById('getDay').value;
-    const userID = window.currentUser.uid;
+  createChart('bend', 'sensorGraph').then(chart => {
+    sensorChart = chart;
+  });
 
-    getData(userID, year, month, day);
-  }
+  // Create a new chart with the selected data type when the dropdown value changes
+  document.getElementById('dataType').addEventListener('change', (event) => {
+    const dataType = event.target.value;
 
-  // Get a data set function call
-  document.getElementById('getDataSet').onclick = function() {
-    const year = document.getElementById('getSetYear').value;
-    const month = document.getElementById('getSetMonth').value;
-    const userID = window.currentUser.uid;
+    if (sensorChart && typeof sensorChart.destroy === 'function') {
+      sensorChart.destroy(); // Destroy current chart before creating new one
+    }
 
-    getDataSet(userID, year, month);
-  }
+    createChart(dataType, 'sensorGraph').then(chart => {
+      sensorChart = chart;
+    });
+  });
 
   // Delete a single day's data function call
-  document.getElementById('delete').onclick = function() {
-    const year = document.getElementById('delYear').value;
-    const month = document.getElementById('delMonth').value;
-    const day = document.getElementById('delDay').value;
-    const userID = window.currentUser.uid;
+  document.getElementById('delete').addEventListener('click', async function() {
+    if (confirm("Are you sure you want to reset the graph? This will delete all your data for this sensor.")) {
+      const dataType = document.getElementById('dataType').value;
+      const userID = window.currentUser.uid;
 
-    deleteData(userID, year, month, day);
-  }
-}
+      await deleteDataSet(userID, dataType);
+
+      if (sensorChart && typeof sensorChart.destroy === 'function') {
+        sensorChart.destroy(); // Destroy current chart before creating new one
+      }
+
+      createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
+        sensorChart = chart;
+      });
+    }
+  });
+});

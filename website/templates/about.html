@@ -1,5 +1,9 @@
 {% extends 'layout.html' %}
 
+{% block scripts %}
+    <script type="module" src="{{ url_for('static', filename='/js/about.js') }}"></script>
+{% endblock scripts %}
+
 {% block main %}
 <div class="overview text-dark text-left">
     <h1 class="text-center mt-4">About Us</h1>

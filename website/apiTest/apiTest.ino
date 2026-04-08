@@ -126,7 +126,7 @@ void httpRequest() {
   // close any connection before send a new request to free the socket
   client.stop();
 
-  // call range() function to get distance
+  // call flex() function to get flex sensor value
   flex();  
   
   // if there's a successful connection:
@@ -137,7 +137,7 @@ void httpRequest() {
     // The Flask route to call should be inbetween the "/" and "?" (ex:  GET /test?...
     // where "test" is the Flask route that will GET the data, "distance" is the key
     // and the value is provided by:  String(distance))
-    String request = "GET /test?bend=" + String(bend) + " HTTP/1.1";
+    String request = "GET /data?bend=" + String(bend) + " HTTP/1.1";
     client.println(request);
 
     // set the host as server IP address
