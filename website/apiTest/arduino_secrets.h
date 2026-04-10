@@ -1,2 +1,2 @@
-#define SECRET_SSID "Def not shiv's phone"
-#define SECRET_PASS "Shiv2048"
+#define SECRET_SSID "Kanata Iphone SE"
+#define SECRET_PASS "QQjv-mqH6-cCsu-Iegu"

@@ -43,7 +43,7 @@ const float R_BENT = 100000.0;  // ~100KΩ; fully bent
 
 // Calibration; Adjust values based off positions
 int rawFlat = 17;  // Reading when fully flat
-int rawBent = 28;  // Reading when fully bent
+int rawBent = 22;  // Reading when fully bent
 
 //Percentage of Bending
 float bend;
@@ -59,7 +59,7 @@ WiFiClient client;
 
 // server address:
 //char server[] = "jsonplaceholder.typicode.com"; // for public domain server
-IPAddress server(10, 113, 61, 224); // for localhost server (server IP address can be found with ipconfig or ifconfig)
+IPAddress server(172, 20, 10, 6); // for localhost server (server IP address can be found with ipconfig or ifconfig)
 
 unsigned long lastConnectionTime = 0;
 const unsigned long postingInterval = 10L * 50L; // delay between updates, in milliseconds (10L * 50L is around 1 second between requests)
@@ -141,7 +141,7 @@ void httpRequest() {
     client.println(request);
 
     // set the host as server IP address
-    client.println("Host: 10.113.61.224");
+    client.println("Host: 172.20.10.6");
 
     // other request properties
     client.println("User-Agent: ArduinoWiFi/1.1");
@@ -189,7 +189,7 @@ void flex(){
   // 5. Human-readable zone
   const char* zone;
   if      (bend < 20) zone = "Flat";
-  else if (bend < 50) zone = "Slight";
+  else if (bend < 33) zone = "Slight";
   else if (bend < 80) zone = "Moderate";
   else                zone = "Full";
   // 6. Print results
