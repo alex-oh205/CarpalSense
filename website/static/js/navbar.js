@@ -2,7 +2,7 @@
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -21,65 +21,79 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication
 const auth = getAuth();
 
-// --------------------- Get reference values -----------------------------//
+// Function to send Firebase config to server when user is logged in
+async function sendConfigToServer() {
+  const keepLoggedIn = localStorage.getItem("keepLoggedIn");
+  let userData = null;
 
-let signInLink = document.getElementById('signInLink');   // Sign in link
-let signUpLink = document.getElementById('signUpLink'); // Sign up link
-let userDropdown = document.getElementById('userDropdown'); // User profile dropdown
-window.currentUser = null; // Initialize currentUser globally
-
-// ----------------------- Get User's Name ------------------------------//
-
-function getUsername() {
-  // Grab value for the 'keep logged in' switch
-  let keepLoggedIn = localStorage.getItem("keepLoggedIn");
-
-  // Grab user information passed from signIn.js
   if (keepLoggedIn == "yes") {
-    window.currentUser = JSON.parse(localStorage.getItem('user'));
+    userData = JSON.parse(localStorage.getItem('user'));
   } else {
-    window.currentUser = JSON.parse(sessionStorage.getItem('user'));
+    userData = JSON.parse(sessionStorage.getItem('user'));
+  }
+
+  if (userData) {
+    try {
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) return;
+
+      const idToken = await firebaseUser.getIdToken(true);
+      
+      const payload = {
+        ...firebaseConfig,
+        currentUser: userData,
+        idToken: idToken
+      };
+      
+      const response = await fetch('/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        console.error('Failed to send config to server:', await response.text());
+      }
+
+      if (!document.getElementById('profile')) {
+        // If user is logged in but profile button doesn't exist, reload
+        location.reload();
+      }
+    } catch (error) {
+      console.error('Error sending config to server:', error);
+    }
   }
 }
 
-// Initialize currentUser immediately when script loads
-getUsername();
+// Send config when Firebase auth state changes
+onAuthStateChanged(auth, (firebaseUser) => {
+  if (firebaseUser) {
+    sendConfigToServer();
+  }
+});
 
 // Sign-out function that will remove user info from local/session storage and
 // sign-out from FRD
-window.signOutUser = function() {
-  // Clear client-side storage first
-  sessionStorage.removeItem('user');
-  localStorage.removeItem('user');
-  localStorage.removeItem('keepLoggedIn');
-
-  // Sign out from Firebase and then redirect
-  signOut(auth).then(() => {
-    // Firebase sign out successful, now redirect
-    window.location = "/logout";
-  }).catch((error) => {
-    console.error('Firebase sign out error:', error);
-    // Still redirect even if Firebase sign out fails
-    window.location = "/logout";
-  });
-};
-
-// --------------------------- Navbar Initialization -----------------------------//
-
-function initNavbar() {
-  if (window.currentUser == null) {
-    if (signInLink) signInLink.hidden = false;
-    if (signUpLink) signUpLink.hidden = false;
-    if (userDropdown) userDropdown.hidden = true;
-  } else {
-    if (userDropdown) {
-      document.getElementById('profileDropdown').textContent = window.currentUser.firstname;
-      userDropdown.hidden = false;
-    }
-    if (signInLink) signInLink.hidden = true;
-    if (signUpLink) signUpLink.hidden = true;
+document.addEventListener('DOMContentLoaded', function() {
+  const logoutLink = document.getElementById('logoutLink');
+  if (logoutLink) {
+    logoutLink.addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      // Sign out from Firebase
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error('Firebase sign out error:', error);
+      }
+      
+      // Clear client-side storage
+      sessionStorage.removeItem('user');
+      localStorage.removeItem('user');
+      localStorage.removeItem('keepLoggedIn');
+      
+      // Redirect to server logout route
+      window.location = '/logout';
+    });
   }
-}
-
-// Run on page load
-window.addEventListener('DOMContentLoaded', initNavbar);
+});

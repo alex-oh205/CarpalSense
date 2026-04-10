@@ -8,14 +8,14 @@
             </button>
 
             <!-- Logo -->
-            <a href="{{ url_for('index') }}" class="navbar-brand mb-0">
+            <a href="{{ url_for('index') }}" class="navbar-brand mb-0 ms-2">
                 <img src="{{ url_for('static', filename='/img/Built_with_Firebase_Logo_LightTP.png') }}" alt="CarpalSense Logo" class="d-inline-block align-text-top">
                 CarpalSense
             </a>
 
             <!-- Collapsible navbar menu with custom hover underline CSS animation -->
             <div class="collapse navbar-collapse" id="navmenu">
-                <ul id="navList" class="navbar-nav me-auto mb-2 mb-md-0">
+                <ul id="navList" class="navbar-nav mx-auto mb-2 mb-md-0">
                     <li class="nav-item">
                         <a href="{{ url_for('problem') }}" class="nav-link hover-underline-animation nbMenuItem px-3">Problem</a>
                     </li>
@@ -32,20 +32,20 @@
         <!-- Auth Buttons -->
         <div class="d-flex align-items-center auth-buttons">
             {% if currentUser %}
-            <ul class="navbar-nav mb-0">
-                <li class="nav-item dropdown" id="userDropdown" hidden>
-                    <a class="nav-link dropdown-toggle linkItem" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        {{ currentUser.firstname }}
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="profileDropdown">
-                        <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="signOutUser()">Sign Out</a></li>
-                    </ul>
-                </li>
-            </ul>
+                <ul class="navbar-nav mb-0" id="profile">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle linkItem" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ currentUser.firstname }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                            <li><a class="dropdown-item" id="logoutLink" href="#">Sign Out</a></li>
+                        </ul>
+                    </li>
+                </ul>
             {% else %}
-                <a href="{{ url_for('signIn') }}" id="signInLink" class="btn btn-link px-3 me-2 text-decoration-none linkItem">Log In</a>
-                <a href="{{ url_for('signUp') }}" id="signUpLink" class="btn btn-primary px-3 linkItem">Sign Up</a>
+                <a href="{{ url_for('signIn') }}" class="btn btn-link px-3 me-2 text-decoration-none linkItem">Log In</a>
+                <a href="{{ url_for('signUp') }}" class="btn btn-primary px-3 linkItem">Sign Up</a>
             {% endif %}
         </div>
     </div>

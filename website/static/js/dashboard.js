@@ -32,8 +32,47 @@ const auth = getAuth();
 // Return instance of your app's Firebase Realtime Database (FRD)
 const db = getDatabase();
 
-// ---------------------// Get reference values -----------------------------
+// --------------------- Get reference values -----------------------------
 let sensorChart = null;                               // Chart instance reference
+let updateInterval = null;                            // Real-time update interval reference
+
+// Function to update chart data in real-time
+async function updateChartData(chart, dataType) {
+  try {
+    const newData = await getDataSet(window.currentUser.uid, dataType);
+
+    // Update the chart's data
+    chart.data.datasets[0].data = newData;
+
+    // Update the chart to reflect new data
+    chart.update('none'); // 'none' prevents animation for smoother real-time updates
+  } catch (error) {
+    console.error('Error updating chart data:', error);
+  }
+}
+
+// Function to start real-time updates
+function startRealTimeUpdates(dataType) {
+  // Clear any existing interval
+  if (updateInterval) {
+    clearInterval(updateInterval);
+  }
+
+  // Update every 0.5 seconds (adjust as needed)
+  updateInterval = setInterval(() => {
+    if (sensorChart && window.currentUser) {
+      updateChartData(sensorChart, dataType);
+    }
+  }, 500);
+}
+
+// Function to stop real-time updates
+function stopRealTimeUpdates() {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+    updateInterval = null;
+  }
+}
 
 // ------------------------Set (insert) data into FRD ------------------------
 // function setData(userID, dataType, index, value) {
@@ -102,10 +141,10 @@ async function getDataSet(userID, dataType) {
   // Must provide the path through the nodes
   await get(child(dbref, 'users/' + userID + '/data/' + dataType)).then((snapshot) => {
     if (snapshot.exists()) {
-      console.log(snapshot.val());
+      // console.log(snapshot.val());
 
       snapshot.forEach(child => {
-        console.log(child.key, child.val());
+        // console.log(child.key, child.val());
         // Push values to the corresponding arrays
         indexes.push(child.key);
         values.push(child.val());
@@ -307,6 +346,8 @@ window.addEventListener('DOMContentLoaded', function() {
 
   createChart('bend', 'sensorGraph').then(chart => {
     sensorChart = chart;
+    // Start real-time updates for the initial chart
+    startRealTimeUpdates('bend');
   });
 
   // Create a new chart with the selected data type when the dropdown value changes
@@ -319,6 +360,8 @@ window.addEventListener('DOMContentLoaded', function() {
 
     createChart(dataType, 'sensorGraph').then(chart => {
       sensorChart = chart;
+      // Start real-time updates for the new data type
+      startRealTimeUpdates(dataType);
     });
   });
 
@@ -328,6 +371,9 @@ window.addEventListener('DOMContentLoaded', function() {
       const dataType = document.getElementById('dataType').value;
       const userID = window.currentUser.uid;
 
+      // Stop real-time updates while deleting
+      stopRealTimeUpdates();
+
       await deleteDataSet(userID, dataType);
 
       if (sensorChart && typeof sensorChart.destroy === 'function') {
@@ -336,7 +382,14 @@ window.addEventListener('DOMContentLoaded', function() {
 
       createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
         sensorChart = chart;
+        // Restart real-time updates after recreating chart
+        startRealTimeUpdates(dataType);
       });
     }
+  });
+
+  // Stop real-time updates when page unloads (user navigates away or logs out)
+  window.addEventListener('beforeunload', () => {
+    stopRealTimeUpdates();
   });
 });

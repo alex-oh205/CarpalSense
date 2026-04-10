@@ -33,20 +33,35 @@ Instructions:
 #include "arduino_secrets.h"  // Used to store private network info
 
 // Define global variables and constants for the circuit & sensor
-const int   FLEX_PIN    = A6;       // Data Output
+const int   FLEX_PIN    = A6;       // Data Output (Flex)
 const float VCC         = 3.3;      // Voltage Input
 const float R_DIV       = 47000.0;  // 47KΩ divider resistor
+const int   ENV_PIN  = A0;          // ENV output (Myoware)
 
 // Resistance Range
 const float R_FLAT = 25000.0;   // ~25KΩ; unflexed
 const float R_BENT = 100000.0;  // ~100KΩ; fully bent
 
-// Calibration; Adjust values based off positions
+// Calibration (Flex)
 int rawFlat = 17;  // Reading when fully flat
-int rawBent = 28;  // Reading when fully bent
+int rawBent = 22;  // Reading when fully bent
+
+// Calibration (Myoware)
+const int THRESH_SLIGHT   = 260;  // ADC value for slight activation
+const int THRESH_MODERATE = 270;  // ADC value for moderate activation
+const int THRESH_STRONG   = 275;  // ADC value for strong activation
+
+// Smoothing (Myoware)
+const int  WINDOW_SIZE = 10;
+int        readings[WINDOW_SIZE];
+int        readIndex   = 0;
+long       total       = 0;
 
 //Percentage of Bending
 float bend;
+
+//Returned Value from EMG
+int smoothed;
 
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;    // your network SSID (name)
@@ -59,7 +74,7 @@ WiFiClient client;
 
 // server address:
 //char server[] = "jsonplaceholder.typicode.com"; // for public domain server
-IPAddress server(10, 113, 61, 224); // for localhost server (server IP address can be found with ipconfig or ifconfig)
+IPAddress server(172, 20, 10, 6); // for localhost server (server IP address can be found with ipconfig or ifconfig)
 
 unsigned long lastConnectionTime = 0;
 const unsigned long postingInterval = 10L * 50L; // delay between updates, in milliseconds (10L * 50L is around 1 second between requests)
@@ -68,8 +83,14 @@ void setup(){
   
   Serial.begin(9600);      //
   pinMode(FLEX_PIN, INPUT);
+  pinMode(ENV_PIN, INPUT);
+
+  // Initialize smoothing buffer
+  for (int i = 0; i < WINDOW_SIZE; i++) readings[i] = 0;
   Serial.println("Adafruit Short Flex Sensor");
   Serial.println("Raw | Voltage | Resistance | Bend% | Zone");
+  Serial.println("=== SparkFun MyoWare 2.0 Muscle Sensor ===");
+  Serial.println("Raw  | Smoothed | Voltage | Activation");
 
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
@@ -128,7 +149,8 @@ void httpRequest() {
 
   // call flex() function to get flex sensor value
   flex();  
-  
+  // call myoware() 
+  myoware();
   // if there's a successful connection:
   if (client.connect(server, 5000)) {
     Serial.println("connecting...");
@@ -137,11 +159,11 @@ void httpRequest() {
     // The Flask route to call should be inbetween the "/" and "?" (ex:  GET /test?...
     // where "test" is the Flask route that will GET the data, "distance" is the key
     // and the value is provided by:  String(distance))
-    String request = "GET /data?bend=" + String(bend) + " HTTP/1.1";
+    String request = "GET /data?bend=" + String(bend) + "&emg=" + String(smoothed) + " HTTP/1.1";
     client.println(request);
 
     // set the host as server IP address
-    client.println("Host: 10.113.61.224");
+    client.println("Host: 172.20.10.6");
 
     // other request properties
     client.println("User-Agent: ArduinoWiFi/1.1");
@@ -189,7 +211,7 @@ void flex(){
   // 5. Human-readable zone
   const char* zone;
   if      (bend < 20) zone = "Flat";
-  else if (bend < 50) zone = "Slight";
+  else if (bend < 33) zone = "Slight";
   else if (bend < 80) zone = "Moderate";
   else                zone = "Full";
   // 6. Print results
@@ -203,5 +225,69 @@ void flex(){
   Serial.print((int)bend);
   Serial.print("%|");
   Serial.println(zone);
-  delay(1000);
+  delay(200);
+}
+void myoware(){
+  // --- 1. Read raw ADC (0–1023) ---
+  int raw = analogRead(ENV_PIN);
+
+  // --- 2. Apply moving average to smooth noise ---
+  total -= readings[readIndex];
+  readings[readIndex] = raw;
+  total += readings[readIndex];
+  readIndex = (readIndex + 1) % WINDOW_SIZE;
+  int smoothed = total / WINDOW_SIZE;
+
+  // --- 3. Convert to voltage ---
+  float voltage = smoothed * (VCC / 1023.0);
+
+  // --- 4. Translation
+  const char* activation;
+  if      (smoothed < THRESH_SLIGHT)   activation = "Rest";
+  else if (smoothed < THRESH_MODERATE) activation = "Slight";
+  else if (smoothed < THRESH_STRONG)   activation = "Moderate";
+  else                                 activation = "STRONG";
+
+  // --- 5. Print
+  Serial.print(raw);
+  Serial.print(" | ");
+  Serial.print(smoothed);
+  Serial.print("    | ");
+  Serial.print(voltage, 2);
+  Serial.print("V   | ");
+  Serial.println(activation);
+
+  delay(200); // ~20 readings per second
+}
+void myoware(){
+  // --- 1. Read raw ADC (0–1023) ---
+  int raw = analogRead(ENV_PIN);
+
+  // --- 2. Apply moving average to smooth noise ---
+  total -= readings[readIndex];
+  readings[readIndex] = raw;
+  total += readings[readIndex];
+  readIndex = (readIndex + 1) % WINDOW_SIZE;
+  int smoothed = total / WINDOW_SIZE;
+
+  // --- 3. Convert to voltage ---
+  float voltage = smoothed * (VCC / 1023.0);
+
+  // --- 4. Translation
+  const char* activation;
+  if      (smoothed < THRESH_SLIGHT)   activation = "Rest";
+  else if (smoothed < THRESH_MODERATE) activation = "Slight";
+  else if (smoothed < THRESH_STRONG)   activation = "Moderate";
+  else                                 activation = "STRONG";
+
+  // --- 5. Print
+  Serial.print(raw);
+  Serial.print(" | ");
+  Serial.print(smoothed);
+  Serial.print("    | ");
+  Serial.print(voltage, 2);
+  Serial.print("V   | ");
+  Serial.println(activation);
+
+  delay(200); // ~20 readings per second
 }
