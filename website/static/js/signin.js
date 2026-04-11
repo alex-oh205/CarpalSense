@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
             userData.uid = user.uid; // Add the Firebase user ID to the user data
             logIn(userData, backendConfig);
         } else {
-            console.log('User does not exist');
+            alert('User does not exist');
         }
       } catch (error) {
         console.log(error.message || error);
