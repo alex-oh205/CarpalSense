@@ -8,8 +8,8 @@ const float R_FLAT = 25000.0;   // ~25KΩ; unflexed
 const float R_BENT = 100000.0;  // ~100KΩ; fully bent
 
 // Calibration
-int rawFlat = 17;  // Reading when fully flat
-int rawBent = 28;  // Reading when fully bent
+int rawFlat = 19;  // Reading when fully flat
+int rawBent = 9;  // Reading when fully bent
 
 void setup() {
   Serial.begin(9600);
