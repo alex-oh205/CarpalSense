@@ -5,16 +5,18 @@
 {% endblock scripts %}
 
 {% block main %}
-<div class="overview text-dark text-left">
+<div class="overview text-dark text-left" style="background-color: #e8e4de;">
+
+    <br>
+    <br>
+    <br>
 
     <!--Title-->
-    <h1 class="text-center mt-5">About Us</h1>
-    <br>
-    <br>
+    <h1 class="text-center">About Us</h1>
     <br>
 
     <!--Team Section-->
-    <div style="background-color: #e8e4de;">
+    <div>
         <br>
         <div class="d-flex flex-row gap-5 w-75 mx-auto py-5">
             <img src="{{url_for('static', filename = 'img/team_placeholder.jpg')}}" alt="Team Image" class="d-block mx-auto mt-5 rounded-4 border border-3 w-75" style="width: 50%; height: auto;">
@@ -29,10 +31,58 @@
     </div>
     
 
-    <!--Shiv-->
-    <div class="d-flex">
-        <img src="{{url_for('static', filename = 'img/person_placeholder.jpg')}}" alt="Team Image" class="d-block rounded-4 border border-3" style="height: 75vh">
+    <!--Team Cards-->
+    <h1 class="text-center"><strong>The Team</strong></h1>
+    <div class="container mt-5">
+        <div class="row g-4 justify-content-center">
+            <div class="col-12 col-md-4">
+                <div class="card h-100">
+                    <img src="{{url_for('static', filename = 'img/team_members/shiv_cropped.jpg')}}" alt="Arjun Arunprasad" class="d-block mx-auto mt-5 rounded-4 border border-3 w-75" style="width: 50%; height: auto;">
+                    <div class="card-body text-center">
+                        <h4 class="card-title">Shiv Patel</h4>
+                        <h6>Sensor Development</h6>
+                        <p class="card-text">Worked on the sensor and all 3D printing / circuitry while meeting all engineering design standards.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card h-100">
+                    <img src="{{url_for('static', filename = 'img/team_members/kanata_cropped.jpg')}}" alt="Arjun Arunprasad" class="d-block mx-auto mt-5 rounded-4 border border-3 w-75" style="width: 50%; height: auto;">
+                    <div class="card-body text-center">
+                        <h4 class="card-title">Kanata Sasaki</h4>
+                        <h6>Sensor Development</h6>
+                        <p class="card-text">Worked on the sensor and all 3D printing / circuitry while meeting all engineering design standards.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-5 justify-content-center mt-4">
+            <div class="col-12 col-md-4">
+                <div class="card h-100">
+                    <img src="{{url_for('static', filename = 'img/team_members/arjun_cropped.jpg')}}" alt="Arjun Arunprasad" class="d-block mx-auto mt-5 rounded-4 border border-3 w-75" style="width: 50%; height: auto;">
+                    <div class="card-body text-center">
+                        <h4 class="card-title">Arjun Arunprasad</h4>
+                        <h6>Software Development</h6>
+                        <p class="card-text">Worked on designing the website, database connection, and flask server.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card h-100">
+                    <img src="{{url_for('static', filename = 'img/team_members/alex_cropped.jpg')}}" alt="Arjun Arunprasad" class="d-block mx-auto mt-5 rounded-4 border border-3 w-75" style="width: 50%; height: auto;">
+                    <div class="card-body text-center">
+                        <h4 class="card-title">Alex Oh</h4>
+                        <h6>Software Development</h6>
+                        <p class="card-text">Worked on designing the website, database connection, and flask server.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <br>
+    <br>
+    <br>
 
 </div>
 {% endblock main %}

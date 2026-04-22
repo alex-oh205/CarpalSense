@@ -11,7 +11,7 @@ table th{
 }
 
 .banner {                                   /* home page banner */
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('img/economy.jpg');
+    background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('img/banner_background.jpg');
     background-size: cover;
     background-position: center;
     padding: 100px 50px;
@@ -73,7 +73,7 @@ main {
 }
 
 .footerBG{
-    background-color: #e6e6e6;
+    background-color: #2c3e50;
 }
 
 .ordered-List-item-font{
