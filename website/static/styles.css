@@ -6,6 +6,10 @@ table th{
 
 }
 
+body{
+    background-color: #e8e4de
+}
+
 .background-color-dark {                    /* navbar and footer background color */
     background-color: #2c3e50;
 }
