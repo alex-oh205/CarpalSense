@@ -11,25 +11,84 @@
             <h1 class="display-5 fw-bold">CarpalSense</h1>
             <p class="fs-4">The future of carpal tunnel prevention and hand health.</p>
             <div class="d-flex gap-3 justify-content-center mb-5">
-                    <button class="btn btn-light">Get Started</button>
-                    <button class="btn btn-outline-light">Learn More</button>
+                    <a href="{{ url_for('signUp') }}" class="btn btn-light">Get Started</a>
+                    <a href="{{ url_for('design') }}" class="btn btn-outline-light outline-light-hover">Learn More</a>
             </div>
             <div class="card">
                 <div class="card-body">
                     
                 </div>
             </div>
-            
         </div>
     </section>
     
-    <!--Overview -->
-    <section class="bg-white text-dark p-2 text-left">
+    <!-- Introduction -->
+    <section class="bg-white text-dark text-left">
+        <div class="container-fluid p-0">
+            <div class="row g-0">
+                <div class="col-12 col-md-6 order-md-2">
+                    <img src="{{url_for('static', filename = 'img/overview.jpg')}}" alt="Overview Image" class="w-100 object-fit-cover" style="max-height: 400px;">
+                </div>
+                <div class="col-12 col-md-6 order-md-1 px-5">
+                    <br> <!-- Line break -->
+                    <h1 class="text-center">What is CarpalSense?</h1>
+                    <p class="overview-font">CarpalSense is a revolutionary approach to preventing carpal tunnel syndrome and promoting hand health through advanced sensor technology and data analytics.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Overview -->
+    <section class="bg-dark text-light text-left">
         <div class="container">
-            <br> <!-- Line break -->
-            <h1 class="text-center">What is CarpalSense?</h1>
-            <p class="overview-font">CarpalSense is a revolutionary approach to preventing carpal tunnel syndrome and promoting hand health through advanced sensor technology and data analytics.</p>
-            <hr><br> <!-- Horizontal line and line break -->
+            <br>
+            <h1 class="text-center">How It Works</h1>
+            <p class="overview-font">CarpalSense works by utilizing advanced sensor technology to monitor hand movements and positioning in real-time, providing immediate feedback to users.</p>
+            <br>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="intro text-left text-dark">
+        <div class="container">
+            <br>
+            <h2 class="fw-bold">Features</h2>
+            <br>
+            <div class="row row-cols-1 row-cols-lg-3 g-4">
+                <div class="col">
+                    <div class="card card-uses card-animation">
+                        <div class="card-image">
+                            <img class="card-img-top" src="{{ url_for('static', filename='img/real_time_monitoring.jpg') }}" alt="Real-time Monitoring" />
+                        </div>
+                        <div class="card-body">
+                            <h4 class="card-title fs-5">Real-time Monitoring</h4>
+                            <p class="card-text">CarpalSense provides real-time feedback on hand positioning and movement to prevent strain.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card card-uses card-animation">
+                        <div class="card-image">
+                            <img class="card-img-top" src="{{ url_for('static', filename='img/predictive_analytics.jpg') }}" alt="Predictive Analytics">
+                        </div>
+                        <div class="card-body">
+                            <h4 class="card-title fs-5">Predictive Analytics</h4>
+                            <p>CarpalSense uses machine learning to predict potential carpal tunnel issues before they arise.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card card-uses card-animation">
+                        <div class="card-image">
+                            <img class="card-img-top" src="{{ url_for('static', filename='img/personalized_recommendations.jpg') }}" alt="Personalized Recommendations">
+                        </div>
+                        <div class="card-body">
+                            <h4 class="card-title fs-5">Personalized Recommendations</h4>
+                            <p class="card-text">CarpalSense provides personalized exercises and ergonomic advice based on individual usage patterns.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 {% endblock main %}

@@ -1,6 +1,11 @@
 <!--Footer (requires BS icons CSS)-->
 <footer class="p-5 footerBG text-dark text-center position-relative">
     <div class="container">
-        <p class="lead" style="color: white">Copyright &copy; SE Flask, Arduino & Firebase Demo</p>
+        <!-- Logo -->
+        <a href="{{ url_for('index') }}" class="navbar-brand mb-0 ms-2">
+            <img src="{{ url_for('static', filename='/img/Built_with_Firebase_Logo_LightTP.png') }}" alt="CarpalSense Logo" class="d-inline-block align-text-top">
+            CarpalSense
+        </a>
+        <p class="lead" style="color: white">Copyright &copy; 2026 CarpalSense</p>
     </div>
 </footer>
