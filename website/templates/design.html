@@ -19,8 +19,8 @@
     <br>
 
     <!--Materials-->
-    <div class="w-75 d-flex flex-row">
-        <div class="w-75 text-left mx-auto">
+    <div class="w-75 d-flex flex-row mx-auto">
+        <div class="text-left mx-auto">
             <h5><strong>Materials</strong></h5>
             <p class="mt-3">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos. Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
             <br>
@@ -52,7 +52,7 @@
                 <tr>
                     <td>Arduino Nano 33 IoT</td>
                     <td>1</td>
-                    <td>$14.95</td>
+                    <td>$13.00</td>
                     <td>Processes sensor readings and sends them to the database</td>
                 </tr>
 
@@ -60,7 +60,7 @@
                 <tr>
                     <td>Fingerless Glove</td>
                     <td>1</td>
-                    <td>$16.04</td>
+                    <td>$13.95</td>
                     <td>A comfortable sleeve for the user to wear</td>
                 </tr>
 
@@ -68,22 +68,68 @@
                 <tr>
                     <td>Flex Sensor</td>
                     <td>1</td>
-                    <td>$9.14</td>
+                    <td>$7.95</td>
                     <td>Measures wrist bending / flexion</td>
                 </tr>
 
                 <!--EMG Sensor-->
                 <tr>
-                    <td>Dry EMG Sensor</td>
+                    <td>OYMotion EMG Sensor</td>
                     <td>1</td>
                     <td>$49.50</td>
                     <td>Measures electrical activity from muscle contractions at the wrist from the skin surface</td>
+                </tr>
+
+                <!--Buzzer-->
+                <tr>
+                    <td>Buzzer</td>
+                    <td>1</td>
+                    <td>$6.95</td>
+                    <td>Alerts the user if they are close to developing carpal tunnel</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
     <!--CAD paragraph-->
+    <!-- Model Section -->
+    <div id="model" class="overview text-dark text-left p-2 mt-4 w-75 mx-auto">
+        <h1 class="text-center mt-5"><strong>The Model</strong></h1>
+        <div class="d-flex mt-5">
+            <!-- Left column: text -->
+            <div class="p-2" style="flex: 1 1 0; min-width: 0">
+                <h3>Our Work</h3>
+                <p class="mt-4">
+                    The CO₂ Sleeve is a compact device designed to help everyday people reduce carbon
+                    dioxide emissions in a simple and safe way, without affecting engine performance or other
+                    equipment. It consists of a hollow sleeve with a carefully designed internal structure,
+                    including a honeycomb-like pattern that maximizes surface area for CO₂ capture. The cylindrical
+                    honeycomb cartridge is easily replaceable when needed. Inside the sleeve, we use an amine-based
+                    sorbent, a chemical material known for its ability to selectively absorb CO₂ from the air. Air
+                    containing carbon dioxide passes through the sleeve, where the sorbent captures and retains the gas,
+                    allowing users to reduce emissions in small, practical ways. The sleeve is modular and easy to
+                    install, and its design is focused on functionality, efficiency, and usability.
+                </p>
+                <h3 class="mt-4">Software and Methods</h3>
+                <p class="mt-4">
+                    We used Autodesk Fusion 360 to design the sleeve and honeycomb structure. The STL model below
+                    represents the prototype. By combining CAD design with our amine-based sorbent, we created a modular
+                    system that’s easy for everyday users to implement, demonstrating a simple but effective method
+                    to reduce CO₂ emissions.
+                </p>
+            </div>
+
+            <!-- Divider -->
+            <div class="vr mx-5"></div>
+
+            <!-- Right column: interactive 3D viewer -->
+            <div class="p-2" style="flex: 1 1 0; min-width: 0">
+                <model-viewer src="models/Full Assembly V2.glb" alt="CO2 Sleeve Model" auto-rotate camera-controls
+                    style="width:100%; height:500px; background-color:#f6f4f1;">
+                </model-viewer>
+            </div>
+        </div>
+    </div>
 
     <!--CAD model-->
 

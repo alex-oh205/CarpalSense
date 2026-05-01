@@ -16,7 +16,7 @@ currentUser = None
 idToken = None
 
 # Index page
-@app.route("/")             # Index page route
+@app.route("/")             # Index page route  
 def index():                # Returns the index page
     return render_template("index.html")
 
