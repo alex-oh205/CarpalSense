@@ -34,90 +34,108 @@ const db = getDatabase();
 
 // ---------------------- Sign-In User ---------------------------------------//
 
+const form = document.querySelector('.needs-validation');
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('signIn').onclick = async function() {
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    form.classList.add('was-validated');
 
-      // Get user's email and password for signing in
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      console.log(email, password);
+    if (!form.checkValidity()) {
+      return;
+    }
 
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+    // Get user's email and password for signing in
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    console.log(email, password);
 
-        // Get the ID token and add to firebase configuration
-        // User ID token is used by the Flask server to let Firebase know that it has
-        // permission to read/write data to the current user's account.
-        const idToken = await user.getIdToken(/* forceRefresh */ true);
-        const backendConfig = {
-          ...firebaseConfig,
-          idToken,
-          currentUser: user.uid  // Keep uid for Firebase operations
-        };
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-        // Log sign-in date in the database
-        // 'update' will only add the last_login info and won't overwrite everything
-        let logDate = new Date();
-        await update(ref(db, 'users/' + user.uid + '/accountInfo'), {
-            last_login: logDate,
-        });
+      // Get the ID token and add to firebase configuration
+      // User ID token is used by the Flask server to let Firebase know that it has
+      // permission to read/write data to the current user's account.
+      const idToken = await user.getIdToken(/* forceRefresh */ true);
+      const backendConfig = {
+        ...firebaseConfig,
+        idToken,
+        currentUser: user.uid  // Keep uid for Firebase operations
+      };
 
-        alert('User signed in successfully!');
+      // Log sign-in date in the database
+      // 'update' will only add the last_login info and won't overwrite everything
+      let logDate = new Date();
+      await update(ref(db, 'users/' + user.uid + '/accountInfo'), {
+        last_login: logDate,
+      });
 
-        // Get snapshot of all the user information that will be passed
-        // to the login() function and stored in either session or local storage
-        // snapshot - copy of a system's state at a specific point in time
-        const snapshot = await get(ref(db, 'users/' + user.uid + '/accountInfo'));
-        if (snapshot.exists()) {
-            console.log(snapshot.val());
-            let userData = snapshot.val();
-            userData.uid = user.uid; // Add the Firebase user ID to the user data
-            logIn(userData, backendConfig);
-        } else {
-            alert('User does not exist');
-        }
-      } catch (error) {
-        console.log(error.message || error);
+      // alert('User signed in successfully!');
+
+      // Get snapshot of all the user information that will be passed
+      // to the login() function and stored in either session or local storage
+      // snapshot - copy of a system's state at a specific point in time
+      const snapshot = await get(ref(db, 'users/' + user.uid + '/accountInfo'));
+      if (snapshot.exists()) {
+        console.log(snapshot.val());
+        let userData = snapshot.val();
+        userData.uid = user.uid; // Add the Firebase user ID to the user data
+        logIn(userData, backendConfig);
+      } else {
+        alert('User does not exist');
       }
-    };
+    } catch (error) {
+      console.log(error.message || error);
+      const placeholder = document.getElementById('alertPlaceholder');
+      placeholder.innerHTML = `
+        <div class="alert alert-danger alert-dismissible fade" role="alert" id="loginError">
+          Incorrect username or password.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+      const alert = document.getElementById('loginError');
+      const bsAlert = new bootstrap.Alert(alert);
+      alert.classList.add('show');
+    }
+  });
 });
 
 // ---------------- Keep User Logged In ----------------------------------//
 async function logIn(user, fbcfg) {
-    let keepLoggedIn = document.getElementById('keepLoggedInSwitch').checked;
+  let keepLoggedIn = document.getElementById('keepLoggedInSwitch').checked;
 
-    // Session storage is temporary (only while browser session is active)
-    // Information saved as string (must convert JS object to string)
-    // Session storage will be cleared with a signOut() function in dashboard.js
-    if (!keepLoggedIn) {
-        sessionStorage.setItem('user', JSON.stringify(user))
-    }
+  // Session storage is temporary (only while browser session is active)
+  // Information saved as string (must convert JS object to string)
+  // Session storage will be cleared with a signOut() function in dashboard.js
+  if (!keepLoggedIn) {
+    sessionStorage.setItem('user', JSON.stringify(user))
+  }
 
-    // Local storage is permanent (keep user logged in even if browser is closed)
-    // Local storage will be cleared with signOut() function in dashboard.js
-    else {
-        localStorage.setItem('keepLoggedIn', 'yes');
-        localStorage.setItem('user', JSON.stringify(user));
-    }
+  // Local storage is permanent (keep user logged in even if browser is closed)
+  // Local storage will be cleared with signOut() function in dashboard.js
+  else {
+    localStorage.setItem('keepLoggedIn', 'yes');
+    localStorage.setItem('user', JSON.stringify(user));
+  }
 
-    // Send Firebase config and user ID to app.py using POST
-    const payload = { ...fbcfg, currentUser: user };
-    try {
-      const response = await fetch('/data', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-      });
+  // Send Firebase config and user ID to app.py using POST
+  const payload = { ...fbcfg, currentUser: user };
+  try {
+    const response = await fetch('/data', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
 
-      if (!response.ok) {
-        console.error('Failed to send login info to server:', await response.text());
-        return;
-      }
-    } catch (error) {
-      console.error('Error sending login info to server:', error);
+    if (!response.ok) {
+      console.error('Failed to send login info to server:', await response.text());
       return;
     }
+  } catch (error) {
+    console.error('Error sending login info to server:', error);
+    return;
+  }
 
-    window.location = "/dashboard";       // Redirect browser to dashboard.html
+  window.location = "/dashboard";       // Redirect browser to dashboard.html
 }

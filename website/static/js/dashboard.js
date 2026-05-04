@@ -286,7 +286,7 @@ async function createChart(dataType, id){
             font: {
               size: 24,
             },
-            color: '#black',
+            color: 'white',
             padding: {
               top: 10,
               bottom: 30
