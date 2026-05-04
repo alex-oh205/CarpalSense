@@ -97,3 +97,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+window.addEventListener('scroll', function(event) {
+  const navbar = document.getElementById('navbar');
+  if (window.scrollY > 20) {
+    navbar.classList.add('background-color-dark');
+    navbar.classList.add('navbar-shadow');
+    navbar.classList.remove('background-transparent');
+  } else {
+    navbar.classList.add('background-transparent');
+    navbar.classList.remove('background-color-dark');
+    navbar.classList.remove('navbar-shadow');
+  }
+});

@@ -14,16 +14,19 @@
                     <a href="{{ url_for('signUp') }}" class="btn btn-light">Get Started</a>
                     <a href="{{ url_for('design') }}" class="btn btn-outline-light outline-light-hover">Learn More</a>
             </div>
-            <div class="card">
+            <div class="card rounded-5 p-3 w-75 mx-auto banner-card">
                 <div class="card-body">
-                    
+                    <video class="rounded-4" width="100%" style="aspect-ratio: 16 / 9;" controls>
+                        <source src="{{ url_for('static', filename='/static/videos/demo.mp4') }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
                 </div>
             </div>
         </div>
     </section>
     
     <!-- Introduction -->
-    <section class="bg-white text-dark text-left">
+    <section class="w-75 mx-auto text-left">
         <div class="container-fluid p-0">
             <div class="row g-0">
                 <div class="col-12 col-md-6 order-md-2">
@@ -39,7 +42,7 @@
     </section>
 
     <!-- Overview -->
-    <section class="bg-dark text-light text-left">
+    <section class="my-3 w-75 mx-auto text-left">
         <div class="container">
             <br>
             <h1 class="text-center">How It Works</h1>
@@ -49,7 +52,7 @@
     </section>
 
     <!-- Features -->
-    <section class="intro text-left text-dark">
+    <section class="intro w-75 mx-auto text-left">
         <div class="container">
             <br>
             <h2 class="fw-bold">Features</h2>
@@ -73,7 +76,7 @@
                         </div>
                         <div class="card-body">
                             <h4 class="card-title fs-5">Predictive Analytics</h4>
-                            <p>CarpalSense uses machine learning to predict potential carpal tunnel issues before they arise.</p>
+                            <p class="card-text">CarpalSense uses machine learning to predict potential carpal tunnel issues before they arise.</p>
                         </div>
                     </div>
                 </div>

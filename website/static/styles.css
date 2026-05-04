@@ -11,36 +11,58 @@
     transform: scale(1.3);
 }
 
-.about-body {                               /* color for the card description and layering */
-    z-index: 1;
-    background-color: white;
+:root {
+    --bg: #07111f;
+    --surface: #111827;
+    --surface-2: #141c2c;
+    --surface-3: #1e2a42;
+    --muted: #9ba6c1;
+    --border: rgba(255, 255, 255, 0.08);
+    --card: #111827;
+    --card-hover: rgba(255, 255, 255, 0.06);
+    --accent: #7aa7ff;
 }
 
-body{
-    background-color: #e8e4de
+.about-body {                               /* color for the card description and layering */
+    z-index: 1;
+    background-color: var(--surface);
+}
+
+.background-transparent {                    /* transparent background */
+    background-color: transparent;
 }
 
 .background-color-dark {                    /* navbar and footer background color */
-    background-color: #2c3e50;
+    background-color: var(--surface-2);
 }
 
 .banner {                                   /* home page banner */
     background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('img/banner_background.jpg');
     background-size: cover;
     background-position: center;
-    padding: 100px 50px;
+    padding: 164px 50px 100px;
 }
 
 .banner h1 {                                /* banner title animation */
     transform: translateX(-2%);
     opacity: 0;
-    animation: slideInFromLeft 1.5s ease-out 0.1s forwards;
+    animation: slideInFromLeft 4s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
 }
 
 .banner p {                                 /* banner description animation */
     transform: translateX(-2%);
     opacity: 0;
-    animation: slideInFromLeft 1.5s ease-out forwards;
+    animation: slideInFromLeft 4s cubic-bezier(0.215, 0.61, 0.355, 1) 0.4s forwards;
+}
+
+.banner-card {                                   /* home page banner */
+    background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url('img/banner_background.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.navbar-shadow {
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.3), inset 0 -1px rgba(255, 255, 255, 0.08);
 }
 
 @keyframes slideInFromLeft {                /* defines slideInFromLeft used above */
@@ -51,11 +73,16 @@ body{
 }
 
 body {                                      /* defines margins for body */
-    margin-top: 64px;
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 64px);
+    min-height: 100vh;
+    margin: 0;
     overflow-x: hidden;
+    background-color: var(--bg);
+}
+
+footer {
+    margin-top: auto;
 }
 
 main {
@@ -65,11 +92,13 @@ main {
 .card-animation {                           /* shadow for bootstrap cards */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s, box-shadow 0.3s;
+    background-color: var(--card);
 }
 
 .card-animation:hover {                     /* animation for bootstrap card hover */
     transform: scale(1.05);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    background-color: var(--card-hover);
 }
 
 .card-image {                               /* overflow for home page cards */
@@ -79,6 +108,11 @@ main {
 .card-image img {                           /* dimensions for card images */
     height: 200px;
     object-fit: cover;
+}
+
+.card-animation:hover {                     /* animation for bootstrap card hover */
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.08);
 }
 
 /* ----------------- Class CSS ----------------- */
@@ -100,7 +134,7 @@ footer {
 }
 
 .footerBG{
-    background-color: #2c3e50;
+    background-color: var(--surface-2);
 }
 
 .ordered-List-item-font{
@@ -123,44 +157,74 @@ footer {
     vertical-align: middle;
 }
 
-.nav-align {                                /* navbar alignment */
-    padding: 10px;
+#navbar {
+    transition: background-color 0.2s ease;
+}
+
+nav {
+    min-height: 64px;
+}
+
+@media (min-width: 768px) {
+    .navbar-nav {
+        height: 100%;
+        align-items: stretch;
+        margin-left: 20px;
+    }
+
+    .navbar-nav .nav-item {
+        height: 64px;
+    }
+
+    .navbar-nav .nav-link {
+        display: flex;
+        align-items: center;
+        height: 64px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #navmenu .navbar-nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #navmenu .nav-item {
+        width: 100%;
+    }
+
+    #navmenu .nav-link {
+        width: 100%;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        padding-left: 30px !important;
+    }
 }
 
 .navbar-toggler {                           /* hamburger menu button */
-    height: 64px;
     border: none !important;
-    border-radius: 0 !important;
-    transition: background-color 0.3s;
+    transition: color 0.3s;
 }
 
 .navbar-toggler:hover {                     /* hamburger button hover color */
-    background-color: #1a252f !important;
+    color: #fff !important;
 }
 
 .navbar-toggler:focus {                     /* mouse click on the hamburger button */
     outline: none !important;
     box-shadow: none !important;
-    background-color: #1a252f !important;
+}
+
+.btn-close:focus {                     /* remove close button focus effect */
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .nbMenuItem {                               /* navbar menu item css */
     color: #fff;
-    background-color: #2c3e50;
     transition: color 0.1s, background-color 0.3s;
-    padding: 20px 20px;
     width: auto;
-}
-
-@media (max-width: 767.98px) {
-    .navbar-collapse .nbMenuItem {
-        width: 100%;
-    }
-}
-
-.nbMenuItem:hover {                         /* hover animation for navbar menu */
-    color: #c7c7c7;
-    background-color: #1a252f;
 }
 
 .linkItem {                               /* navbar menu link css */
@@ -172,50 +236,8 @@ footer {
     color: #c7c7c7;
 }
 
-.navbar .auth-buttons {
-    flex-shrink: 0;
-    white-space: nowrap;
-    margin-left: auto;
-    margin-right: 20px;
-}
-
-.navbar .auth-buttons .btn {
-    white-space: nowrap;
-}
-
-@media (max-width: 767.98px) {
-    .navbar .collapse.navbar-collapse {
-        width: 100%;
-        background-color: #2c3e50;
-        transition: none !important;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-    }
-    .navbar .collapse.navbar-collapse.show {
-        display: block !important;
-    }
-    .navbar .collapse.navbar-collapse .navbar-nav .nav-link {
-        padding: 0.75rem 1rem;
-    }
-    .navbar .auth-buttons {
-        flex-shrink: 1;
-        flex-wrap: nowrap;
-        min-width: 0;
-    }
-    .navbar .auth-buttons .btn {
-        white-space: nowrap;
-        min-width: 0;
-    }
-}
-
-@media (max-width: 575.98px) {
-    .navbar .auth-buttons .btn {
-        padding-left: 0.6rem;
-        padding-right: 0.6rem;
-        font-size: 0.825rem;
-    }
+#profileDropdown:focus {                  /* ensure active dropdown link stays visible */
+    color: #c7c7c7 !important;
 }
 
 .notes{
@@ -257,7 +279,7 @@ footer {
 
 .my-table, .my-table th, .my-table td {
     background-color: transparent !important;
-    border: 2px solid #535353 !important;
+    border: 2px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 @keyframes slotMachine {                    /* animation for above, image swipes up then appears from bottom */
@@ -279,10 +301,9 @@ footer {
     }
 }
 
-/* ----------------- ID CSS ----------------- */
-
-
-
+.heading {
+    margin-top: 64px;
+}
 
 /* -----------------Underline Animation CSS -----------------*/
 .hover-underline-animation {                /* navbar hover */
@@ -300,11 +321,11 @@ footer {
     left: 0;
     background-color: #fff;
     transform-origin: bottom center;
-    transition: transform 0.25s ease-out;
 }
 
 .hover-underline-animation:hover::after {   /* scale when hovered */
     transform: scaleX(1);
+    transition: transform 0.25s ease-out;
 }
 
 @media only screen and (max-width: 768px) {

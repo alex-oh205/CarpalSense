@@ -6,25 +6,24 @@
 
 {% block main %}
     <!-- Heading -->
-    <section class="text-left">
+    <section class="text-center heading">
         <div class="container">
             <br>
             <h1>Sign Up</h1>
-            <hr>
+            <br>
         </div>
     </section>
 
     <!--Sign Up -->
     <section class="signUp">
         <div class="container-sm signUpForm">
-            <br>
-            <form>
+            <form class="col-sm-7 col-md-6 col-lg-5 col-xl-4 mx-auto d-flex flex-column align-items-center">
                 <input type="text" placeholder="First name" id="firstName" class="form-control mb-3">
                 <input type="text" placeholder="Last name" id="lastName" class="form-control mb-3">
                 <input type="email" placeholder="Email" id="userEmail" class="form-control mb-3">
                 <input type="password" placeholder="Password" id="userPass" class="form-control mb-3">
                 <button type = "button" id="submitData" name="submitData" class="btn btn-primary mb-3 w-100">Sign Up</button>
-                <a href="{{ url_for('signIn') }}" class="badge bg-secondary py-1 w-100">Already have an account?</a>
+                <a href="{{ url_for('signIn') }}" class="badge bg-secondary py-1 text-decoration-none">Already have an account?</a>
             </form>
         </div>
     </section>

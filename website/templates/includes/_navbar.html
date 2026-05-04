@@ -1,27 +1,35 @@
-<nav class="navbar navbar-expand-md fixed-top background-color-dark navbar-dark nav-align py-0">
-    <!-- lg = large breakpoint, headerBG = custom css BG color -->
-    <div class="d-flex align-items-center justify-content-between w-100">
-        <div class="d-flex align-items-center">
-            <!-- Hamburger Menu Button-->
-            <button class="navbar-toggler me-2" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu" aria-controls="navmenu" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+<header class="navbar navbar-expand-md fixed-top background-transparent navbar-dark py-0" id="navbar">
+    <nav class="container-xxl gx-5 flex-wrap flex-md-nowrap">
+        <!-- Hamburger Menu Button-->
+        <button class="navbar-toggler p-2 h-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#navmenu" aria-controls="navmenu" aria-expanded="false" aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" class="bi" height="24" width="24" aria-hidden="true">
+                <path fill-rule="evenodd" d="M2.5 11.5A.5.5 0 0 1 3 11h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 3h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"></path>
+            </svg>
+            <!-- <span class="navbar-toggler-icon"></span> -->
+            <span class="d-none fs-6 pe-1">Browse</span>
+        </button>
+        <!-- Logo -->
+        <a href="{{ url_for('index') }}" class="navbar-brand p-0 me-0 me-md-2 d-flex align-items-center">
+            <img src="{{ url_for('static', filename='/img/carpal_sense_logo.png') }}" alt="CarpalSense Logo" class="me-2" style="height: 40px; width: auto;">
+            <span class="d-none d-md-inline">CarpalSense</span>
+        </a>
 
-            <!-- Logo -->
-            <a href="{{ url_for('index') }}" class="navbar-brand mb-0 ms-2">
-                <img src="{{ url_for('static', filename='/img/carpal_sense_logo.png') }}" alt="CarpalSense Logo" class="d-inline-block align-text-top" style="width: 60px; height: auto;">
-            </a>
-
-            <!-- Collapsible navbar menu with custom hover underline CSS animation -->
-            <div class="collapse navbar-collapse" id="navmenu">
-                <ul id="navList" class="navbar-nav mx-auto mb-2 mb-md-0">
-                    <li class="nav-item">
+        <!-- Collapsible navbar menu with custom hover underline CSS animation -->
+        <div class="offcanvas-md offcanvas-start background-color-dark text-light me-auto h-100" tabindex="-1" id="navmenu" aria-labelledby="navmenuLabel">
+            <div class="offcanvas-header px-4 pb-0">
+                <h5 class="offcanvas-title" id="navmenuLabel">CarpalSense</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close" data-bs-target="#navmenu"></button>
+            </div>
+            <div class="offcanvas-body p-0 h-100">
+                <hr class="d-md-none">
+                <ul id="navList" class="navbar-nav flex-row flex-wrap">
+                    <li class="nav-item col-12 col-md-auto">
                         <a href="{{ url_for('problem') }}" class="nav-link hover-underline-animation nbMenuItem px-3">Problem</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item col-12 col-md-auto">
                         <a href="{{ url_for('design') }}" class="nav-link hover-underline-animation nbMenuItem px-3">Design</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item col-12 col-md-auto">
                         <a href="{{ url_for('about') }}" class="nav-link hover-underline-animation nbMenuItem px-3">About</a>
                     </li>
                 </ul>
@@ -29,23 +37,21 @@
         </div>
 
         <!-- Auth Buttons -->
-        <div class="d-flex align-items-center auth-buttons">
+        <div class="d-flex">
             {% if currentUser %}
-                <ul class="navbar-nav mb-0" id="profile">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle linkItem" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            {{ currentUser.firstname }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="profileDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                            <li><a class="dropdown-item" id="logoutLink" href="#">Sign Out</a></li>
-                        </ul>
-                    </li>
-                </ul>
+                <div class="dropdown" id="profile">
+                    <a class="nav-link dropdown-toggle linkItem" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {{ currentUser.firstname }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="profileDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li><a class="dropdown-item" id="logoutLink" href="#">Sign Out</a></li>
+                    </ul>
+                </div>
             {% else %}
-                <a href="{{ url_for('signIn') }}" class="btn btn-link px-3 me-2 text-decoration-none linkItem">Log In</a>
+                <a href="{{ url_for('signIn') }}" class="btn btn-outline-light outline-light-hover px-3 me-3 text-decoration-none linkItem">Log In</a>
                 <a href="{{ url_for('signUp') }}" class="btn btn-primary px-3 linkItem">Sign Up</a>
             {% endif %}
         </div>
-    </div>
-</nav>
+    </nav>
+</header>

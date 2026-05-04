@@ -22,7 +22,7 @@
     </div>
 
     <!--Sensor Graph -->
-    <div class="container border">
+    <div class="container border card">
         <br><h2>Sensor Graph</h2><br>
         <ol class="list-group list-group-numbered notes">
             <li class="list-group-item border-0">Select a sensor type to view its data over time</li>
@@ -36,11 +36,20 @@
             </select>
         </div>
 
-        <!-- Graph -->
-        <div class="container d-flex overflow-hidden bg-light rounded-4" id="chart-wrapper">
-            <canvas id="sensorGraph"></canvas>
+        <ol class="list-group list-group-numbered notes">
+            <li class="list-group-item border-0">Select a measurement session date/time</li>
+        </ol><br>
+
+        <div class="container dataForm mb-5">
+            <select class="form-select mb-3" id="sessions">
+            </select>
         </div>
 
-        <button type = "button" id="delete" name="delete" class="btn btn-outline-primary mb-3 w-100">Reset Data</button>
+        <!-- Graph -->
+        <div class="container d-flex overflow-hidden bg-dark rounded-4" id="chart-wrapper">
+            <canvas id="sensorGraph"></canvas>
+        </div>
+        <br>
+        <button type = "button" id="delete" name="delete" class="btn btn-outline-primary mb-3 w-25 mx-auto">Reset Data</button>
     </div><br>
 {% endblock main %}
