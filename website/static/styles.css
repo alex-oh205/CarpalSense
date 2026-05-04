@@ -46,26 +46,29 @@
 .banner h1 {                                /* banner title animation */
     transform: translateX(-2%);
     opacity: 0;
-    animation: slideInFromLeft 4s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+    animation: slideIn 4s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
 }
 
 .banner p {                                 /* banner description animation */
     transform: translateX(-2%);
     opacity: 0;
-    animation: slideInFromLeft 4s cubic-bezier(0.215, 0.61, 0.355, 1) 0.4s forwards;
+    animation: slideIn 4s cubic-bezier(0.215, 0.61, 0.355, 1) 0.4s forwards;
 }
 
 .banner-card {                                   /* home page banner */
     background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url('img/banner_background.jpg');
     background-size: cover;
     background-position: center;
+    transform: translateY(4%);
+    opacity: 0;
+    animation: slideIn 4s cubic-bezier(0.215, 0.61, 0.355, 1) 0.2s forwards;
 }
 
 .navbar-shadow {
     box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.3), inset 0 -1px rgba(255, 255, 255, 0.08);
 }
 
-@keyframes slideInFromLeft {                /* defines slideInFromLeft used above */
+@keyframes slideIn {                /* defines slideIn used above */
     to {
         transform: translateX(0);
         opacity: 1;
@@ -158,7 +161,7 @@ footer {
 }
 
 #navbar {
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 nav {
@@ -166,17 +169,17 @@ nav {
 }
 
 @media (min-width: 768px) {
-    .navbar-nav {
+    #navmenu .navbar-nav {
         height: 100%;
         align-items: stretch;
         margin-left: 20px;
     }
 
-    .navbar-nav .nav-item {
+    #navmenu .navbar-nav .nav-item {
         height: 64px;
     }
 
-    .navbar-nav .nav-link {
+    #navmenu .navbar-nav .nav-link {
         display: flex;
         align-items: center;
         height: 64px;
