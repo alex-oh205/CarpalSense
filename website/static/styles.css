@@ -40,7 +40,7 @@
     background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('img/banner_background.jpg');
     background-size: cover;
     background-position: center;
-    padding: 164px 50px 100px;
+    padding: 164px 50px 50px;
 }
 
 .banner h1 {                                /* banner title animation */
@@ -268,37 +268,22 @@ nav {
     padding-right: 8rem;
 }
 
-.logo img {                                 /* home page button logo */
-    width: auto;
-    height: 50px;
+.logo:hover img {                           /* home page button animation */
+    animation: spin 0.5s ease-in-out;
 }
 
-.logo:hover img {                           /* home page button animation */
-    animation: slotMachine 0.5s ease-out;
+@keyframes spin {                    /* animation for above, image spins */
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .my-table, .my-table th, .my-table td {
     background-color: transparent !important;
     border: 2px solid rgba(255, 255, 255, 0.15) !important;
-}
-
-@keyframes slotMachine {                    /* animation for above, image swipes up then appears from bottom */
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    50% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    51% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .heading {

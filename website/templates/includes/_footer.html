@@ -1,11 +1,16 @@
 <!--Footer (requires BS icons CSS)-->
-<footer class="p-5 footerBG text-center position-relative">
-    <div class="container">
+<footer class="footerBG text-center">
+    <div class="container p-4 d-flex align-items-center justify-content-between">
         <!-- Logo -->
-        <a href="{{ url_for('index') }}" class="navbar-brand mb-0 ms-2">
-            <img src="{{ url_for('static', filename='/img/carpal_sense_logo.png') }}" alt="CarpalSense Logo" class="d-inline-block align-text-top" style="width: 60px; height: auto;">
+        <a href="{{ url_for('index') }}" class="navbar-brand mb-0 ms-2 d-flex align-items-center fs-5">
+            <img src="{{ url_for('static', filename='/img/carpal_sense_logo.png') }}" alt="CarpalSense Logo" class="d-inline-block align-text-top" style="width: 40px; height: auto;">
             CarpalSense
         </a>
-        <p class="lead">Copyright &copy; 2026 CarpalSense</p>
+        
+    </div>
+
+    <!-- Copyright -->
+    <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.05);">
+        Copyright &copy; 2026 CarpalSense
     </div>
 </footer>
