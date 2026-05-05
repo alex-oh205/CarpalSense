@@ -230,6 +230,10 @@ nav {
     width: auto;
 }
 
+.nbMenuItem.active {                        /* active state for navbar menu */
+    font-weight: 600;
+}
+
 .linkItem {                               /* navbar menu link css */
     color: #fff;
     transition: color 0.1s;

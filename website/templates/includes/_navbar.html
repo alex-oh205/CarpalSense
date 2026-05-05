@@ -24,13 +24,13 @@
                 <hr class="d-md-none">
                 <ul id="navList" class="navbar-nav flex-row flex-wrap">
                     <li class="nav-item col-12 col-md-auto">
-                        <a href="{{ url_for('problem') }}" class="nav-link hover-underline-animation nbMenuItem px-3">Problem</a>
+                        <a href="{{ url_for('problem') }}" class="nav-link hover-underline-animation nbMenuItem px-3 {% if request.endpoint == 'problem' %}active{% endif %}">Problem</a>
                     </li>
                     <li class="nav-item col-12 col-md-auto">
-                        <a href="{{ url_for('design') }}" class="nav-link hover-underline-animation nbMenuItem px-3">Design</a>
+                        <a href="{{ url_for('design') }}" class="nav-link hover-underline-animation nbMenuItem px-3 {% if request.endpoint == 'design' %}active{% endif %}">Design</a>
                     </li>
                     <li class="nav-item col-12 col-md-auto">
-                        <a href="{{ url_for('about') }}" class="nav-link hover-underline-animation nbMenuItem px-3">About</a>
+                        <a href="{{ url_for('about') }}" class="nav-link hover-underline-animation nbMenuItem px-3 {% if request.endpoint == 'about' %}active{% endif %}">About</a>
                     </li>
                 </ul>
             </div>
