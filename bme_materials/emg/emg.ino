@@ -23,7 +23,7 @@
 #include <EMGFilters.h>
 
 // ── Pin ───────────────────────────────────────────────────────────────────────
-#define EMG_PIN  A1   // Avoid A0 on Nano 33 IoT (shared with IMU)
+#define EMG_PIN  A5   // Avoid A0 on Nano 33 IoT (shared with IMU)
 
 // ── Sampling ──────────────────────────────────────────────────────────────────
 // EMGFilters supports SAMPLE_FREQ_500HZ or SAMPLE_FREQ_1000HZ only
@@ -178,9 +178,9 @@ void loop() {
 // ─────────────────────────────────────────────────────────────────────────────
 void printContractionEvent() {
   const char* level;
-  if      (envelope >= LEVEL_HIGH) level = "HIGH  ██████████";
-  else if (envelope >= LEVEL_MED)  level = "MEDIUM  ██████░░░░";
-  else                              level = "LOW     ███░░░░░░░";
+  if      (envelope >= LEVEL_HIGH) level = "HIGH";
+  else if (envelope >= LEVEL_MED)  level = "MEDIUM";
+  else                              level = "LOW";
 
   Serial.print(">>> CONTRACTION #");
   Serial.print(contractionCount);
