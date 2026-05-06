@@ -6,112 +6,113 @@
 {% endblock scripts %}
 
 {% block main %}
-<div class="container py-5 heading">
-    <div class="mb-4">
-        <h1 id="welcome">Welcome, {{ currentUser.firstname }}</h1>
-        <p class="text-muted">Real-time carpal tunnel posture and muscle monitoring dashboard.</p>
-    </div>
+<section class="dashboard">
+    <div class="container py-5 heading">
+        <div class="mb-4">
+            <h1 id="welcome">Welcome, {{ currentUser.firstname }}</h1>
+            <p class="text-muted">Real-time posture and muscle monitoring for carpal tunnel.</p>
+        </div>
 
-    <div class="row gy-4">
-        <div class="col-lg-8">
-            <div class="card dashboard-card">
-                <div class="card-body p-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-4">
-                        <div>
-                            <h2 class="h5 mb-1">Live Monitoring</h2>
-                            <p class="text-muted mb-0">Updated every 0.5 seconds from your wearable sensor.</p>
+        <div class="row gy-4">
+            <div class="col-lg-8">
+                <div class="card dashboard-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-4">
+                            <div>
+                                <h2 class="h5 mb-1">Live Monitoring</h2>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span id="connectionStatus" class="badge rounded-pill status-badge status-good">Connected</span>
+                                <span id="batteryStatus" class="badge rounded-pill status-badge status-neutral">85% Battery</span>
+                                <span id="modeStatus" class="badge rounded-pill status-badge status-neutral">Active</span>
+                            </div>
                         </div>
-                        <div class="d-flex flex-wrap gap-2">
-                            <span id="connectionStatus" class="badge rounded-pill status-badge status-good">Connected</span>
-                            <span id="batteryStatus" class="badge rounded-pill status-badge status-neutral">85% Battery</span>
-                            <span id="modeStatus" class="badge rounded-pill status-badge status-neutral">Active</span>
+
+                        <div class="row gx-3 gy-3 mb-4">
+                            <div class="col-6 col-md-4">
+                                <div class="metric-card">
+                                    <small class="text-muted">Risk Level</small>
+                                    <div id="riskLevel" class="metric-value metric-value-good">Good</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="metric-card">
+                                    <small class="text-muted">High-risk minutes</small>
+                                    <div id="highRiskMinutes" class="metric-value">0 min</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="metric-card">
+                                    <small class="text-muted">Alerts today</small>
+                                    <div id="alertCount" class="metric-value">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="metric-card">
+                                    <small class="text-muted">Last update</small>
+                                    <div id="lastUpdate" class="metric-value">--</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row gx-3 align-items-end mb-4">
+                            <div class="col-md-5">
+                                <label class="form-label text-white mb-2" for="dataType">Sensor view</label>
+                                <select class="form-select form-select-dark" id="dataType">
+                                    <option value="bend" selected>Wrist Flexion</option>
+                                    <option value="emg">Muscle Activity</option>
+                                    <option value="imu">Wrist Rotation</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label text-white mb-2" for="sessions">Session</label>
+                                <select class="form-select form-select-dark" id="sessions">
+                                    <option selected>Live session</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 text-md-end">
+                                <button type="button" id="delete" class="btn btn-outline-primary w-100">Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="chart-panel bg-dark rounded-4 p-3">
+                            <canvas id="sensorGraph"></canvas>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="row gx-3 gy-3 mb-4">
-                        <div class="col-6 col-md-4">
-                            <div class="metric-card">
-                                <small class="text-muted">Risk Level</small>
-                                <div id="riskLevel" class="metric-value metric-value-good">Good</div>
+            <div class="col-lg-4">
+                <div class="card dashboard-card mb-4">
+                    <div class="card-body p-4">
+                        <h2 class="h6 mb-3">Risk Summary</h2>
+                        <div class="summary-list">
+                            <div class="summary-item">
+                                <div class="summary-label">Neutral wrist time</div>
+                                <div id="neutralTime" class="summary-value">0 min</div>
                             </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="metric-card">
-                                <small class="text-muted">High-risk minutes</small>
-                                <div id="highRiskMinutes" class="metric-value">0 min</div>
+                            <div class="summary-item">
+                                <div class="summary-label">Over-flexed / extended</div>
+                                <div id="motionExposure" class="summary-value">0%</div>
                             </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="metric-card">
-                                <small class="text-muted">Alerts today</small>
-                                <div id="alertCount" class="metric-value">0</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="metric-card">
-                                <small class="text-muted">Last update</small>
-                                <div id="lastUpdate" class="metric-value">--</div>
+                            <div class="summary-item">
+                                <div class="summary-label">Recommended breaks</div>
+                                <div id="breakRecommendation" class="summary-value">Every 30 min</div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="row gx-3 align-items-end mb-4">
-                        <div class="col-md-5">
-                            <label class="form-label text-white mb-2" for="dataType">Sensor view</label>
-                            <select class="form-select form-select-dark" id="dataType">
-                                <option value="bend" selected>Bend</option>
-                                <option value="emg">EMG</option>
-                                <option value="imu">IMU</option>
-                            </select>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label text-white mb-2" for="sessions">Session</label>
-                            <select class="form-select form-select-dark" id="sessions">
-                                <option selected>Live session</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 text-md-end">
-                            <button type="button" id="delete" class="btn btn-outline-primary w-100">Reset</button>
-                        </div>
-                    </div>
-
-                    <div class="chart-panel bg-dark rounded-4 p-3">
-                        <canvas id="sensorGraph"></canvas>
+                <div class="card dashboard-card">
+                    <div class="card-body p-4">
+                        <h2 class="h6 mb-3">Alerts & recommendations</h2>
+                        <ul class="list-group alert-list" id="alertList">
+                            <li class="list-group-item alert-item">No active alerts. Your wrist is in a safe position.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-lg-4">
-            <div class="card dashboard-card mb-4">
-                <div class="card-body p-4">
-                    <h2 class="h6 mb-3">Risk Summary</h2>
-                    <div class="summary-list">
-                        <div class="summary-item">
-                            <div class="summary-label">Neutral wrist time</div>
-                            <div id="neutralTime" class="summary-value">0 min</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Over-flexed / extended</div>
-                            <div id="motionExposure" class="summary-value">0%</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Recommended breaks</div>
-                            <div id="breakRecommendation" class="summary-value">Every 30 min</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card dashboard-card">
-                <div class="card-body p-4">
-                    <h2 class="h6 mb-3">Alerts & recommendations</h2>
-                    <ul class="list-group alert-list" id="alertList">
-                        <li class="list-group-item alert-item">No active alerts. Your wrist is in a safe position.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
     </div>
-</div>
+</section>
 {% endblock main %}
