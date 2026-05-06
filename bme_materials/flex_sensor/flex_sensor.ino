@@ -8,7 +8,7 @@ const float R_FLAT = 25000.0;   // ~25KΩ; unflexed
 const float R_BENT = 100000.0;  // ~100KΩ; fully bent
 
 // Calibration
-int rawFlat = 24;  // Reading when fully flat
+int rawFlat = 22;  // Reading when fully flat
 int rawBent = 14;  // Reading when fully bent
 
 void setup() {
