@@ -312,12 +312,14 @@ async function createChart(dataType, id){
     data = await getDataSet(window.currentUser.uid, dataType);
   }
 
+  let label = '';
   let datasets = [];
 
-  if (dataType == "bend") {
+  if (dataType === "bend") {
+    label = 'Wrist Flexion (%)';
     datasets.push(
       {
-        label:    `Bend %`,     // Dataset label for legend
+        label:    `${label}`,     // Dataset label for legend
         data,
         fill:     true,           // Fill area under the linechart
         backgroundColor:  'rgba(255, 107, 169, 0.1)',    // Gradient fill color
@@ -331,10 +333,11 @@ async function createChart(dataType, id){
         tension: 0.4
       }
     );
-  } else if (dataType == "emg") {
+  } else if (dataType === "emg") {
+    label = 'Muscle Activity (mV)';
     datasets.push(
       {
-        label:    `EMG (mV)`,     // Dataset label for legend
+        label:    `${label}`,     // Dataset label for legend
         data,
         fill:     true,           // Fill area under the linechart
         backgroundColor:  'rgba(122, 167, 255, 0.1)',    // Gradient fill color
@@ -348,10 +351,11 @@ async function createChart(dataType, id){
         tension: 0.4
       }
     );
-  } else if (dataType == "imu") {
+  } else if (dataType === "imu") {
+    label = 'Wrist Rotation (°)';
     datasets.push(
       {
-        label:    `IMU (°)`,     // Dataset label for legend
+        label:    `${label}`,     // Dataset label for legend
         data,
         fill:     true,           // Fill area under the linechart
         backgroundColor:  'rgba(251, 191, 36, 0.1)',    // Gradient fill color
@@ -416,7 +420,7 @@ async function createChart(dataType, id){
         y: {                              // y-axis properties
           title: {
             display: true,                          
-            text: `Sensor Value`,     // y-axis title
+            text: `${label}`,     // y-axis title
             font: {
               size: 14,
               weight: '600'
@@ -441,7 +445,7 @@ async function createChart(dataType, id){
       plugins: {                  // Display options for title and legend
         title: {
             display: true,
-            text: 'Sensor Value Over Time',
+            text: `${label} Over Time`,
             font: {
               size: 18,
               weight: '600'
