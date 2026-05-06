@@ -320,6 +320,134 @@ nav {
     transition: transform 0.25s ease-out;
 }
 
+.dashboard-card {
+    background-color: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.18);
+}
+
+.metric-card {
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0.35rem;
+}
+
+.metric-value-good {
+    color: #7dd65c;
+}
+
+.metric-value-warning {
+    color: #f0b44c;
+}
+
+.metric-value-critical {
+    color: #ff6b6b;
+}
+
+.metric-value-neutral {
+    color: #9ba6c1;
+}
+
+.status-badge {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.85rem;
+}
+
+.status-good {
+    background-color: #2f8d4f;
+    color: #ffffff;
+}
+
+.status-neutral {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.status-warning {
+    background-color: #e1a83a;
+    color: #111827;
+}
+
+.status-critical {
+    background-color: #d64545;
+    color: #ffffff;
+}
+
+.chart-panel {
+    height: 420px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.chart-panel canvas {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+    flex: 1;
+}
+
+.summary-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.summary-label {
+    color: var(--muted);
+}
+
+.summary-value {
+    font-weight: 700;
+}
+
+.alert-list {
+    background: transparent;
+}
+
+.alert-item {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f8f9fa;
+}
+
+.form-select-dark {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    color-scheme: dark;
+}
+
+.form-select-dark:focus {
+    box-shadow: 0 0 0 0.25rem rgba(122, 167, 255, 0.25);
+}
+
+.form-select-dark option {
+    background-color: #111827;
+    color: #ffffff;
+}
+
+.form-select-dark option:checked {
+    background-color: #7aa7ff;
+    color: #ffffff;
+}
+
 @media only screen and (max-width: 768px) {
     .hover-underline-animation::after {
         width: 2px;
