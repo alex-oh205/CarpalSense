@@ -38,7 +38,7 @@
 
 .banner {                                   /* home page banner */
     background: #07111F;
-    background: linear-gradient(45deg, rgba(7, 17, 31, 1) 33%, rgba(0, 9, 105, 1) 100%);
+    background: linear-gradient(135deg, var(--bg) 0%, rgb(55, 0, 110) 100%);
     background-size: cover;
     background-position: center;
     padding: 164px 50px 50px;
