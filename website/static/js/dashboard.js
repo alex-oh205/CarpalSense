@@ -6,7 +6,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebas
 import { getAuth, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword }
   from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-import { getDatabase, ref, set, update, child, get, remove }
+import { getDatabase, ref, set, update, child, get, remove, onValue }
   from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js"
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -35,6 +35,33 @@ const db = getDatabase();
 // --------------------- Get reference values -----------------------------
 let sensorChart = null;                               // Chart instance reference
 let updateInterval = null;                            // Real-time update interval reference
+let isCollecting = false;
+
+function updateCollectButtonState() {
+  const collectBtn = document.getElementById('collectBtn');
+  if (!collectBtn) return;
+  if (isCollecting) {
+    collectBtn.textContent = 'Stop';
+    collectBtn.className = 'btn btn-outline-danger w-100';
+  } else {
+    collectBtn.textContent = 'Start';
+    collectBtn.className = 'btn btn-outline-success w-100';
+  }
+}
+
+function setConnectionStatus(isConnected) {
+  const status = document.getElementById('connectionStatus');
+  if (!status) return;
+  status.textContent = isConnected ? 'Connected' : 'Disconnected';
+  status.className = `badge rounded-pill status-badge ${isConnected ? 'status-good' : 'status-critical'}`;
+}
+
+function setDataActivityStatus(isActive) {
+  const mode = document.getElementById('modeStatus');
+  if (!mode) return;
+  mode.textContent = isActive ? 'Active' : 'No updates';
+  mode.className = `badge rounded-pill status-badge ${isActive ? 'status-good' : 'status-warning'}`;
+}
 
 // Function to update chart data in real-time
 async function updateChartData(chart, dataType) {
@@ -47,13 +74,18 @@ async function updateChartData(chart, dataType) {
     // Update the chart to reflect new data
     chart.update('none'); // 'none' prevents animation for smoother real-time updates
     updateDashboardSummary(dataType, chart.data.datasets[0].data);
+    setDataActivityStatus(true);
   } catch (error) {
     console.error('Error updating chart data:', error);
+    setDataActivityStatus(false);
   }
 }
 
 // Function to start real-time updates
 function startRealTimeUpdates(dataType) {
+  isCollecting = true;
+  updateCollectButtonState();
+
   // Clear any existing interval
   if (updateInterval) {
     clearInterval(updateInterval);
@@ -73,6 +105,9 @@ function stopRealTimeUpdates() {
     clearInterval(updateInterval);
     updateInterval = null;
   }
+  isCollecting = false;
+  updateCollectButtonState();
+  setDataActivityStatus(false);
 }
 
 // ------------------------Set (insert) data into FRD ------------------------
@@ -288,22 +323,6 @@ function updateDashboardSummary(dataType, data) {
   breakRecommendation.textContent = summary.breakRecommendation;
   buildAlerts(summary.alerts);
 }
-
-// Add a item to the table of data
-// function addItemToTable(day, temp, tbody) {
-//   console.log(day, temp);
-//   let tRow = document.createElement("tr");
-//   let td1 = document.createElement("td");
-//   let td2 = document.createElement("td");
-
-//   td1.innerHTML = day;
-//   td2.innerHTML = temp;
-
-//   tRow.appendChild(td1);
-//   tRow.appendChild(td2);
-
-//   tbody.appendChild(tRow);
-// }
 
 // Function that creates a chart from sensor data
 async function createChart(dataType, id){
@@ -540,8 +559,14 @@ window.addEventListener('DOMContentLoaded', function() {
 
   createChart('bend', 'sensorGraph').then(chart => {
     sensorChart = chart;
-    // Start real-time updates for the initial chart
-    startRealTimeUpdates('bend');
+    updateCollectButtonState();
+    setDataActivityStatus(false);
+  });
+
+  // Track Firebase connectivity state
+  const connectedRef = ref(db, '.info/connected');
+  onValue(connectedRef, (snapshot) => {
+    setConnectionStatus(snapshot.val() === true);
   });
 
   // Create a new chart with the selected data type when the dropdown value changes
@@ -554,9 +579,20 @@ window.addEventListener('DOMContentLoaded', function() {
 
     createChart(dataType, 'sensorGraph').then(chart => {
       sensorChart = chart;
-      // Start real-time updates for the new data type
-      startRealTimeUpdates(dataType);
+      if (isCollecting) {
+        startRealTimeUpdates(dataType);
+      }
     });
+  });
+
+  document.getElementById('collectBtn').addEventListener('click', () => {
+    const dataType = document.getElementById('dataType').value;
+
+    if (isCollecting) {
+      stopRealTimeUpdates();
+    } else {
+      startRealTimeUpdates(dataType);
+    }
   });
 
   // Delete a single day's data function call
@@ -564,6 +600,7 @@ window.addEventListener('DOMContentLoaded', function() {
     if (confirm("Are you sure you want to reset the graph? This will delete all your data for this sensor.")) {
       const dataType = document.getElementById('dataType').value;
       const userID = window.currentUser.uid;
+      const wasCollecting = isCollecting;
 
       // Stop real-time updates while deleting
       stopRealTimeUpdates();
@@ -576,8 +613,11 @@ window.addEventListener('DOMContentLoaded', function() {
 
       createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
         sensorChart = chart;
-        // Restart real-time updates after recreating chart
-        startRealTimeUpdates(dataType);
+        if (wasCollecting) {
+          startRealTimeUpdates(dataType);
+        } else {
+          updateCollectButtonState();
+        }
       });
     }
   });

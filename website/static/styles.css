@@ -86,6 +86,7 @@ body {                                      /* defines margins for body */
     margin: 0;
     overflow-x: hidden;
     background-color: var(--bg);
+    font-family: "Inter", sans-serif;
 }
 
 footer {
@@ -325,7 +326,7 @@ nav {
 }
 
 body:has(.dashboard) {
-    background: linear-gradient(135deg, rgba(0, 9, 107, 0.5) 0%, rgba(128, 0, 255, 0.5) 100%);
+    background: linear-gradient(135deg, var(--bg) 0%, rgb(55, 0, 110) 100%);
 }
 
 .dashboard-card {

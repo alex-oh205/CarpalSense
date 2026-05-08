@@ -1,5 +1,3 @@
 - Change Firebase data structure to include date/time
 - Make it so you can select a date/time to view its data
 - Footer
-- Fix navbar
-	- active page

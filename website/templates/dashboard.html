@@ -23,8 +23,7 @@
                             </div>
                             <div class="d-flex flex-wrap gap-2">
                                 <span id="connectionStatus" class="badge rounded-pill status-badge status-good">Connected</span>
-                                <span id="batteryStatus" class="badge rounded-pill status-badge status-neutral">85% Battery</span>
-                                <span id="modeStatus" class="badge rounded-pill status-badge status-neutral">Active</span>
+                                <span id="modeStatus" class="badge rounded-pill status-badge status-warning">No updates</span>
                             </div>
                         </div>
 
@@ -56,7 +55,7 @@
                         </div>
 
                         <div class="row gx-3 align-items-end mb-4">
-                            <div class="col-md-5">
+                            <div class="col-md-4">
                                 <label class="form-label text-white mb-2" for="dataType">Sensor view</label>
                                 <select class="form-select form-select-dark" id="dataType">
                                     <option value="bend" selected>Wrist Flexion</option>
@@ -64,13 +63,16 @@
                                     <option value="imu">Wrist Rotation</option>
                                 </select>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-md-4">
                                 <label class="form-label text-white mb-2" for="sessions">Session</label>
                                 <select class="form-select form-select-dark" id="sessions">
                                     <option selected>Live session</option>
                                 </select>
                             </div>
-                            <div class="col-md-2 text-md-end">
+                            <div class="col-md-2">
+                                <button type="button" id="collectBtn" class="btn btn-outline-success w-100">Start</button>
+                            </div>
+                            <div class="col-md-2">
                                 <button type="button" id="delete" class="btn btn-outline-primary w-100">Reset</button>
                             </div>
                         </div>

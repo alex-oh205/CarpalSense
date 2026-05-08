@@ -112,12 +112,18 @@ def data():
             # Take parameters from Arduino request & assign value to variable "value"
 
             # print(config)
-            value = request.args.get('bend')
+            bend = request.args.get('bend')
+            emg = request.args.get('emg')
+            # imu = request.args.get('imu')
 
-            print('Bend: ' + value, flush=True)
-            
+            print('Bend: ' + bend, flush=True)
+            print('EMG: ' + emg, flush=True)
+            # print('IMU: ' + imu, flush=True)
+
             # Write Arduino data to Firebase
-            db.child('users/' + currentUser['uid'] + '/data/bend').update({key:value}, idToken)
+            db.child('users/' + currentUser['uid'] + '/data/bend').update({key: bend}, idToken)
+            db.child('users/' + currentUser['uid'] + '/data/emg').update({key: emg}, idToken)
+            # db.child('users/' + currentUser['uid'] + '/data/imu').update({key: imu}, idToken)
 
             # Increment key
             key += 1
