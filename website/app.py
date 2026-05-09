@@ -57,7 +57,7 @@ def signIn():              # Returns the sign in page
 # Logout route
 @app.route("/logout")
 def logout():
-    global currentUser, idToken, config, time, currentSessionId
+    global currentUser, idToken, config, sessionTime, currentSessionId
     currentUser = None
     idToken = None
     config = {}

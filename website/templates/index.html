@@ -11,8 +11,12 @@
             <h1 class="display-5 fw-bold">CarpalSense</h1>
             <p class="fs-4">The future of carpal tunnel prevention and hand health.</p>
             <div class="d-flex gap-3 justify-content-center mb-5">
+                {% if currentUser %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light">Get Started</a>
+                {% else %}
                     <a href="{{ url_for('signUp') }}" class="btn btn-light">Get Started</a>
-                    <a href="{{ url_for('design') }}" class="btn btn-outline-light outline-light-hover">Learn More</a>
+                {% endif %}
+                <a href="{{ url_for('design') }}" class="btn btn-outline-light outline-light-hover">Learn More</a>
             </div>
             <div class="card rounded-5 p-3 w-75 mx-auto banner-card">
                 <div class="card-body">
@@ -27,10 +31,10 @@
     
     <!-- Introduction -->
     <section class="w-75 mx-auto text-left">
-        <div class="container-fluid p-0">
+        <div class="container p-0">
             <div class="row g-0">
                 <div class="col-12 col-md-6 order-md-2 mt-5">
-                    <img src="{{url_for('static', filename = 'img/overview.jpg')}}" alt="Overview Image" class="w-100 object-fit-cover" style="max-height: 400px;">
+                    <img src="{{url_for('static', filename = 'img/overview.jpg')}}" alt="Overview Image" class="w-100 object-fit-cover rounded-4" style="max-height: 400px; aspect-ratio: 1 / 1; object-position: center 10%;">
                 </div>
                 <div class="col-12 col-md-6 order-md-1 px-5">
                     <br><br>
@@ -44,7 +48,7 @@
     </section>
 
     <!-- Features -->
-    <section class="intro w-75 mx-auto text-left">
+    <section class="intro w-75 mx-auto text-left mb-5">
         <div class="container">
             <br>
             <h2 class="fw-bold mt-5">Features</h2>

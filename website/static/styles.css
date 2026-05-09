@@ -60,7 +60,7 @@
     /*background: #282c5e;*/
     /*background: linear-gradient(45deg, rgba(40, 44, 94, 1) 33%, rgba(58, 69, 194, 1) 100%);*/
     background: #8b94c7;
-    background: linear-gradient(45deg, rgba(255, 255, 255, 0.8) 33%, rgba(255, 255, 255, 0.8) 33%);
+    background: linear-gradient(135deg, hsl(from var(--bg) h 40% 50%) 0%, hsl(from rgb(55, 0, 110) h 40% 50%) 100%);
     background-size: cover;
     background-position: center;
     transform: translateY(4%);

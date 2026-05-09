@@ -43,22 +43,36 @@ let sessionDataStarted = false;
 let activeSessionId = null;                            // Currently recording session
 let activeSessionName = '';
 let selectedHistorySessionId = '';
-let sessionDataCounts = { bend: 0, emg: 0, imu: 0 };
 
-function updateCollectButtonState() {
-  const collectBtn = document.getElementById('collectBtn');
-  if (!collectBtn) return;
-  if (isCollecting) {
-    collectBtn.textContent = 'Pause';
-    collectBtn.classList.remove('btn-outline-success');
-    collectBtn.classList.add('btn-outline-warning');
-  } else {
-    collectBtn.textContent = 'Start';
-    collectBtn.classList.remove('btn-outline-warning');
-    collectBtn.classList.add('btn-outline-success');
-  }
+// --------------------- Utility Functions ----------------------------
+// Formats date to display only time (HH:MM:SS)
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+// --------------------- State Update Functions ----------------------------
+// Updates the connection status badge on the dashboard
+function setConnectionStatus(isConnected) {
+  const status = document.getElementById('connectionStatus');
+  status.textContent = isConnected ? 'Connected' : 'Disconnected';
+  status.className = `badge rounded-pill status-badge ${isConnected ? 'status-good' : 'status-critical'}`;
+}
+
+// Updates the data activity status badge on the dashboard
+function setDataActivityStatus(isActive) {
+  const mode = document.getElementById('modeStatus');
+  mode.textContent = isActive ? 'Active' : 'No updates';
+  mode.className = `badge rounded-pill status-badge ${isActive ? 'status-good' : 'status-warning'}`;
+}
+
+// Updates the current session label on the dashboard
+function setCurrentSessionLabel(label) {
+  const labelEl = document.getElementById('currentSessionLabel');
+  if (!labelEl) return;
+  labelEl.textContent = label || 'No active session';
+}
+
+// Updates the state of session control buttons
 function updateSessionControls() {
   const collectBtn = document.getElementById('collectBtn');
   const newSessionBtn = document.getElementById('newSessionBtn');
@@ -86,64 +100,60 @@ function updateSessionControls() {
   }
 }
 
-function setCurrentSessionLabel(label) {
-  const labelEl = document.getElementById('currentSessionLabel');
-  if (!labelEl) return;
-  labelEl.textContent = label || 'No active session';
-}
-
+// Updates the state of history control buttons
 function updateHistoryControls() {
   const deleteBtn = document.getElementById('deleteSessionBtn');
   deleteBtn.disabled = !selectedHistorySessionId;
 }
 
-async function getSessionSummary(userID, sessionId) {
-  if (!sessionId) return null;
-  const dbref = ref(db);
-  const snapshot = await get(child(dbref, `users/${userID}/sessions/${sessionId}/summary`));
-  return snapshot.exists() ? snapshot.val() : null;
-}
-
-function updateHistorySummary(summary) {
-  const riskLevel = document.getElementById('historyRiskLevel');
-  const highRiskMinutes = document.getElementById('historyHighRiskMinutes');
-  const alertCount = document.getElementById('historyAlertCount');
-  const neutralTime = document.getElementById('historyNeutralTime');
-  const motionExposure = document.getElementById('historyMotionExposure');
-  const breakRecommendation = document.getElementById('historyBreakRecommendation');
-
-  if (!riskLevel || !highRiskMinutes || !alertCount || !neutralTime || !motionExposure || !breakRecommendation) return;
-
-  if (!summary) {
-    riskLevel.textContent = '--';
-    highRiskMinutes.textContent = '--';
-    alertCount.textContent = '--';
-    neutralTime.textContent = '--';
-    motionExposure.textContent = '--';
-    breakRecommendation.textContent = '--';
-    return;
+// Updates the state of the collect button
+function updateCollectButtonState() {
+  const collectBtn = document.getElementById('collectBtn');
+  if (!collectBtn) return;
+  if (isCollecting) {
+    collectBtn.textContent = 'Pause';
+    collectBtn.classList.remove('btn-outline-success');
+    collectBtn.classList.add('btn-outline-warning');
+  } else {
+    collectBtn.textContent = 'Start';
+    collectBtn.classList.remove('btn-outline-warning');
+    collectBtn.classList.add('btn-outline-success');
   }
-
-  riskLevel.textContent = summary.riskLabel || '--';
-  highRiskMinutes.textContent = summary.highRiskMinutes != null ? `${summary.highRiskMinutes} min` : '--';
-  alertCount.textContent = summary.alertCount != null ? summary.alertCount : '--';
-  neutralTime.textContent = summary.neutralPercent != null ? `${Math.round((summary.neutralPercent / 100) * 60)} min` : '--';
-  motionExposure.textContent = summary.exposurePercent != null ? `${summary.exposurePercent}%` : '--';
-  breakRecommendation.textContent = summary.breakRecommendation || '--';
 }
 
-function setConnectionStatus(isConnected) {
-  const status = document.getElementById('connectionStatus');
-  status.textContent = isConnected ? 'Connected' : 'Disconnected';
-  status.className = `badge rounded-pill status-badge ${isConnected ? 'status-good' : 'status-critical'}`;
+// --------------------- Session Management Functions ----------------------
+// Creates a new session in Firebase and returns the session ID and name
+async function createSession(userID) {
+  const createdAt = Date.now();
+  const id = `session-${createdAt}`;
+  const sessionName = `Session ${new Date(createdAt).toLocaleString()}`;
+  const session = {
+    createdAt,
+    id,
+    name: sessionName,
+    active: true,
+    summary: {
+      riskLabel: 'Waiting for data',
+      riskClass: 'metric-value-neutral',
+      highRiskMinutes: 0,
+      totalTime: 0,
+      alertCount: 0,
+      neutralPercent: 100,
+      exposurePercent: 0,
+      breakRecommendation: 'Waiting for first sensor values',
+      alerts: []
+    }
+  };
+  try {
+    await update(ref(db, `users/${userID}/sessions/${id}`), session);
+    return { id, name: sessionName };
+  } catch (error) {
+    console.error('Unable to create session:', error);
+    return null;
+  }
 }
 
-function setDataActivityStatus(isActive) {
-  const mode = document.getElementById('modeStatus');
-  mode.textContent = isActive ? 'Active' : 'No updates';
-  mode.className = `badge rounded-pill status-badge ${isActive ? 'status-good' : 'status-warning'}`;
-}
-
+// Sets the active session ID on the server
 async function setServerSessionId(sessionId) {
   try {
     await fetch('/session', {
@@ -156,154 +166,16 @@ async function setServerSessionId(sessionId) {
   }
 }
 
-// Function to update chart data in real-time
-async function updateChartData(chart, dataType) {
-  try {
-    setDataActivityStatus(true);
-    const newData = await getDataSet(window.currentUser.uid, dataType);
-
-    // Cache data count for session writes
-    if (activeSessionId) {
-      await syncSessionData(window.currentUser.uid, activeSessionId, dataType, newData);
-    }
-
-    // Update the chart's data
-    chart.data.datasets[0].data = newData;
-
-    // Update the chart to reflect new data
-    chart.update('none'); // 'none' prevents animation for smoother real-time updates
-    const summary = updateDashboardSummary(dataType, chart.data.datasets[0].data);
-    if (activeSessionId) {
-      await updateSessionSummary(window.currentUser.uid, activeSessionId, summary);
-    }
-  } catch (error) {
-    console.error('Error updating chart data:', error);
-    setDataActivityStatus(false);
-  }
+// Sets the current active session on the dashboard
+function setCurrentSession(session) {
+  activeSessionId = session.id;
+  activeSessionName = session.name;
+  setServerSessionId(activeSessionId);
+  setCurrentSessionLabel(activeSessionName);
+  updateSessionControls();
 }
 
-async function syncSessionData(userID, sessionId, dataType, data) {
-  if (!data || !data.length || !sessionId) return;
-
-  const currentCount = sessionDataCounts[dataType] || 0;
-  if (data.length <= currentCount) return;
-
-  const newPoints = data.slice(currentCount);
-  const updates = {};
-  newPoints.forEach(point => {
-    const key = point.x;
-    updates[`users/${userID}/sessions/${sessionId}/data/${dataType}/${key}`] = point.y;
-  });
-
-  try {
-    await update(ref(db), updates);
-    sessionDataCounts[dataType] = data.length;
-  } catch (error) {
-    console.error('Error writing session data:', error);
-  }
-}
-
-// Function to start real-time updates
-function startRealTimeUpdates(dataType) {
-  isCollecting = true;
-  if (sessionDataStarted) {
-    fetch('/session-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ collecting: true, reset: false })
-    }).catch(error => {
-      console.error('Unable to start session data collection on backend:', error);
-    });
-  } else {
-    sessionDataStarted = true;
-    fetch('/session-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ collecting: true, reset: true })
-    }).catch(error => {
-      console.error('Unable to start session data collection on backend:', error);
-    });
-  }
-  updateCollectButtonState();
-
-  // Clear any existing interval
-  if (updateInterval) {
-    clearInterval(updateInterval);
-  }
-
-  // Update every 0.5 seconds (adjust as needed)
-  updateInterval = setInterval(() => {
-    if (sensorChart && window.currentUser) {
-      updateChartData(sensorChart, dataType);
-    }
-  }, 500);
-}
-
-// Function to stop real-time updates
-function stopRealTimeUpdates() {
-  if (updateInterval) {
-    clearInterval(updateInterval);
-    updateInterval = null;
-  }
-  isCollecting = false;
-  fetch('/session-data', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ collecting: false, reset: false })
-  }).catch(error => {
-    console.error('Unable to stop session data collection on backend:', error);
-  });
-  updateCollectButtonState();
-  setDataActivityStatus(false);
-}
-
-// ---------------------------Get a data set --------------------------
-// Must be an async function because you need to get all the data from FRD
-// before you can process it for a table or graph
-async function getDataSet(userID, dataType) {
-  const items = [];
-  const dbref = ref(db); // Firebase parameter to access database
-
-  await get(child(dbref, 'users/' + userID + '/data/' + dataType)).then((snapshot) => {
-    if (snapshot.exists()) {
-      snapshot.forEach(child => {
-        const key = Number(child.key);
-        if (!Number.isNaN(key)) {
-          items.push({ index: key, value: child.val() });
-        }
-      });
-    }
-  })
-  .catch((error) => {
-    alert('Unsuccessful, error: ' + error);
-  });
-
-  items.sort((a, b) => a.index - b.index);
-  return items.map((item) => ({ x: item.index, y: item.value })); // Return array of objects with x and y values for graphing
-}
-
-async function getSessionData(userID, sessionId, dataType) {
-  const items = [];
-  const dbref = ref(db);
-
-  await get(child(dbref, `users/${userID}/sessions/${sessionId}/data/${dataType}`)).then((snapshot) => {
-    if (snapshot.exists()) {
-      snapshot.forEach(child => {
-        const key = Number(child.key);
-        if (!Number.isNaN(key)) {
-          items.push({ index: key, value: child.val() });
-        }
-      });
-    }
-  })
-  .catch((error) => {
-    alert('Unsuccessful, error: ' + error);
-  });
-
-  items.sort((a, b) => a.index - b.index);
-  return items.map((item) => ({ x: item.index, y: item.value }));
-}
-
+// Loads user's sessions from Firebase and populates the session history dropdown
 async function loadSessions(userID) {
   const sessionsSelect = document.getElementById('historySessions');
   if (!sessionsSelect) return;
@@ -336,64 +208,13 @@ async function loadSessions(userID) {
   updateHistoryControls();
 }
 
-async function createSession(userID) {
-  const createdAt = Date.now();
-  const id = `session-${createdAt}`;
-  const sessionName = `Session ${new Date(createdAt).toLocaleString()}`;
-  const session = {
-    createdAt,
-    id,
-    name: sessionName,
-    active: true,
-    summary: {
-      riskLabel: 'Waiting for data',
-      highRiskMinutes: 0,
-      alertCount: 0,
-      neutralPercent: 100,
-      exposurePercent: 0,
-      breakRecommendation: 'Waiting for first sensor values'
-    }
-  };
-  try {
-    await update(ref(db, `users/${userID}/sessions/${id}`), session);
-    return { id, name: sessionName };
-  } catch (error) {
-    console.error('Unable to create session:', error);
-    return null;
-  }
-}
-
-async function setCurrentSession(session) {
-  activeSessionId = session.id;
-  activeSessionName = session.name;
-  sessionDataCounts = { bend: 0, emg: 0, imu: 0 };
-  await setServerSessionId(activeSessionId);
-  setCurrentSessionLabel(activeSessionName);
-  updateSessionControls();
-  if (sensorChart && typeof sensorChart.destroy === 'function') {
-    sensorChart.destroy();
-  }
-  createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
-    sensorChart = chart;
-  });
-}
-
-async function updateSessionSummary(userID, sessionId, summary) {
-  if (!sessionId) return;
-  try {
-    await update(ref(db, `users/${userID}/sessions/${sessionId}/summary`), summary);
-  } catch (error) {
-    console.error('Unable to update session summary:', error);
-  }
-}
-
+// Deletes a session from Firebase
 async function deleteSession(userID, sessionId) {
   if (!sessionId) return;
   try {
     await remove(ref(db, `users/${userID}/sessions/${sessionId}`));
     if (activeSessionId === sessionId) {
       activeSessionId = null;
-      sessionDataCounts = { bend: 0, emg: 0, imu: 0 };
       isCollecting = false;
     }
   } catch (error) {
@@ -401,10 +222,123 @@ async function deleteSession(userID, sessionId) {
   }
 }
 
-function formatTimestamp(date) {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+// ---------------------- Session Summary Functions ----------------------------
+
+// Calculates risk, summary info, and alerts using sensor data
+async function calculateRiskAndSummary() {
+  const flexData = await getSessionData(window.currentUser.uid, activeSessionId, 'bend');
+  const emgData = await getSessionData(window.currentUser.uid, activeSessionId, 'emg');
+  const imuData = await getSessionData(window.currentUser.uid, activeSessionId, 'imu');
+
+  const summary = {
+    riskLabel: 'Good',
+    riskClass: 'metric-value-good',
+    highRiskMinutes: 0,
+    totalTime: 0,
+    alertCount: 0,
+    neutralPercent: 100,
+    exposurePercent: 0,
+    breakRecommendation: 'All good!',
+    alerts: []
+  };
+
+  if (flexData.length === 0 && emgData.length === 0 && imuData.length === 0) {
+    summary.riskLabel = 'Waiting for data';
+    summary.riskClass = 'metric-value-neutral';
+    summary.breakRecommendation = 'Waiting for first sensor values';
+    updateSessionSummary(window.currentUser.uid, activeSessionId, summary);
+    return summary;
+  }
+
+  const latestFlex = flexData[flexData.length - 1]?.y;
+  const latestEmg = emgData[emgData.length - 1]?.y;
+  const latestImu = imuData[imuData.length - 1]?.y;
+  let warningLabel = 'Good';
+  let warningClass = 'metric-value-good';
+
+  if (latestFlex) {
+    if (latestFlex > 65) {
+      warningLabel = 'High';
+      warningClass = 'metric-value-critical';
+      summary.alerts.push('Wrist bend is high. Straighten your wrist and take a break.');
+    } else if (latestFlex > 45) {
+      if (warningLabel === 'Good') {
+        warningLabel = 'Caution';
+        warningClass = 'metric-value-warning';
+      }
+      summary.alerts.push('Your wrist is moderately bent. Adjust posture.');
+    }
+  }
+
+  if (latestEmg) {
+    if (latestEmg > 1.0) {
+      warningLabel = 'High';
+      warningClass = 'metric-value-critical';
+      summary.alerts.push('Muscle activity is elevated. Relax your grip.');
+    } else if (latestEmg > 0.8) {
+      if (warningLabel === 'Good') {
+        warningLabel = 'Caution';
+        warningClass = 'metric-value-warning';
+      }
+      summary.alerts.push('Muscle activity is above recommended range. Reduce tension.');
+    }
+  }
+
+  if (latestImu) {
+    if (Math.abs(latestImu) > 55) {
+      warningLabel = 'High';
+      warningClass = 'metric-value-critical';
+      summary.alerts.push('Wrist angle is extreme. Return to neutral position.');
+    } else if (Math.abs(latestImu) > 35) {
+      if (warningLabel === 'Good') {
+        warningLabel = 'Caution';
+        warningClass = 'metric-value-warning';
+      }
+      summary.alerts.push('Wrist angle is out of neutral range. Correct posture.');
+    }
+  }
+
+  summary.riskLabel = warningLabel;
+  summary.riskClass = warningClass;
+
+  const highRiskSamplesFlex = flexData.filter(point => {
+    return point.y > 45;
+  }).map(point => point.x);
+  const highRiskSamplesEmg = emgData.filter(point => {
+    return point.y > 0.8;
+  }).map(point => point.x);
+  const highRiskSamplesImu = imuData.filter(point => {
+    return Math.abs(point.y) > 35;
+  }).map(point => point.x);
+
+  // 0.5 second intervals between each data point
+  const highRiskSeconds = [...new Set([...highRiskSamplesFlex, ...highRiskSamplesEmg, ...highRiskSamplesImu])].length * 0.5;
+  const totalSeconds = flexData.length > 0 ? flexData[flexData.length - 1].x : 0;
+
+  summary.highRiskMinutes = Math.round(highRiskSeconds / 6) / 10;
+  summary.totalTime = Math.round(totalSeconds / 6) / 10;
+  summary.alertCount = summary.alerts.length;
+  summary.neutralPercent = Math.round(((totalSeconds - highRiskSeconds) / totalSeconds) * 100);
+  summary.exposurePercent = Math.round((highRiskSeconds / totalSeconds) * 100);
+
+  if (summary.alertCount === 0) {
+    summary.alerts.push('No active alerts.');
+  }
+
+  if (summary.exposurePercent > 50) {
+    summary.breakRecommendation = 'Stop and stretch now';
+  } else if (summary.exposurePercent > 25) {
+    summary.breakRecommendation = 'Take a short break soon';
+  } else {
+    summary.breakRecommendation = 'All good!';
+  }
+
+  updateSessionSummary(window.currentUser.uid, activeSessionId, summary);
+
+  return summary;
 }
 
+// Builds alert list items on dashboard
 function buildAlerts(messages) {
   const alertList = document.getElementById('alertList');
   alertList.innerHTML = '';
@@ -422,94 +356,9 @@ function buildAlerts(messages) {
   });
 }
 
-function calculateRiskAndSummary(dataType, data) {
-  const summary = {
-    riskLabel: 'Good',
-    riskClass: 'metric-value-good',
-    highRiskMinutes: 0,
-    alertCount: 0,
-    neutralPercent: 100,
-    exposurePercent: 0,
-    breakRecommendation: 'Every 30 min',
-    alerts: []
-  };
-
-  if (!data || !data.length) {
-    summary.riskLabel = 'Waiting for data';
-    summary.riskClass = 'metric-value-neutral';
-    summary.breakRecommendation = 'Waiting for first sensor values';
-    summary.alerts = [];
-    return summary;
-  }
-
-  const latest = data[data.length - 1].y;
-  let warningLabel = 'Good';
-  let warningClass = 'metric-value-good';
-
-  if (dataType === 'bend') {
-    if (latest > 65) {
-      warningLabel = 'High';
-      warningClass = 'metric-value-critical';
-      summary.alerts.push('Wrist bend is high. Straighten your wrist and take a break.');
-    } else if (latest > 45) {
-      warningLabel = 'Caution';
-      warningClass = 'metric-value-warning';
-      summary.alerts.push('Your wrist is moderately bent. Adjust posture.');
-    }
-  } else if (dataType === 'emg') {
-    if (latest > 1.0) {
-      warningLabel = 'High';
-      warningClass = 'metric-value-critical';
-      summary.alerts.push('Muscle activity is elevated. Relax your grip.');
-    } else if (latest > 0.8) {
-      warningLabel = 'Caution';
-      warningClass = 'metric-value-warning';
-      summary.alerts.push('EMG is above normal. Reduce tension.');
-    }
-  } else if (dataType === 'imu') {
-    if (Math.abs(latest) > 55) {
-      warningLabel = 'High';
-      warningClass = 'metric-value-critical';
-      summary.alerts.push('Wrist angle is extreme. Return to neutral position.');
-    } else if (Math.abs(latest) > 35) {
-      warningLabel = 'Caution';
-      warningClass = 'metric-value-warning';
-      summary.alerts.push('Wrist angle is out of neutral range. Correct posture.');
-    }
-  }
-
-  summary.riskLabel = warningLabel;
-  summary.riskClass = warningClass;
-
-  const highRiskSamples = data.filter(point => {
-    if (dataType === 'bend') return point.y > 45;
-    if (dataType === 'emg') return point.y > 0.8;
-    if (dataType === 'imu') return Math.abs(point.y) > 35;
-    return false;
-  }).length;
-
-  summary.highRiskMinutes = Math.round(highRiskSamples * 0.5);
-  summary.alertCount = summary.alerts.length;
-  summary.neutralPercent = Math.round(((data.length - highRiskSamples) / data.length) * 100);
-  summary.exposurePercent = Math.round((highRiskSamples / data.length) * 100);
-
-  if (summary.alertCount === 0) {
-    summary.alerts.push('No active alerts. Keep your wrist in a neutral position.');
-  }
-
-  if (summary.riskLabel === 'High') {
-    summary.breakRecommendation = 'Stop and stretch now';
-  } else if (summary.riskLabel === 'Caution') {
-    summary.breakRecommendation = 'Take a short break soon';
-  } else {
-    summary.breakRecommendation = 'Keep monitoring posture';
-  }
-
-  return summary;
-}
-
-function updateDashboardSummary(dataType, data) {
-  const summary = calculateRiskAndSummary(dataType, data);
+// Updates the dashboard summary display
+async function updateDashboardSummary() {
+  const summary = await calculateRiskAndSummary();
   const riskLevel = document.getElementById('riskLevel');
   const highRiskMinutes = document.getElementById('highRiskMinutes');
   const alertCount = document.getElementById('alertCount');
@@ -520,17 +369,88 @@ function updateDashboardSummary(dataType, data) {
 
   riskLevel.textContent = summary.riskLabel;
   riskLevel.className = `metric-value ${summary.riskClass}`;
-  highRiskMinutes.textContent = `${summary.highRiskMinutes} min`;
+  highRiskMinutes.textContent = `${summary.highRiskMinutes.toFixed(1)} min`;
   alertCount.textContent = summary.alertCount;
-  lastUpdate.textContent = formatTimestamp(new Date());
-  neutralTime.textContent = `${Math.round((summary.neutralPercent / 100) * 60)} min`;
+  lastUpdate.textContent = formatTime(new Date());
+  neutralTime.textContent = `${(summary.totalTime - summary.highRiskMinutes).toFixed(1)} min`;
   motionExposure.textContent = `${summary.exposurePercent}%`;
   breakRecommendation.textContent = summary.breakRecommendation;
   buildAlerts(summary.alerts);
-  return summary;
 }
 
-// Function that creates a chart from sensor data
+// Updates the past session summary display
+function updateHistorySummary(summary) {
+  const riskLevel = document.getElementById('historyRiskLevel');
+  const highRiskMinutes = document.getElementById('historyHighRiskMinutes');
+  const alertCount = document.getElementById('historyAlertCount');
+  const neutralTime = document.getElementById('historyNeutralTime');
+  const motionExposure = document.getElementById('historyMotionExposure');
+  const breakRecommendation = document.getElementById('historyBreakRecommendation');
+
+  if (!riskLevel || !highRiskMinutes || !alertCount || !neutralTime || !motionExposure || !breakRecommendation) return;
+
+  if (!summary) {
+    riskLevel.textContent = '--';
+    highRiskMinutes.textContent = '--';
+    alertCount.textContent = '--';
+    neutralTime.textContent = '--';
+    motionExposure.textContent = '--';
+    breakRecommendation.textContent = '--';
+    return;
+  }
+
+  riskLevel.textContent = summary.riskLabel || '--';
+  highRiskMinutes.textContent = summary.highRiskMinutes != null ? `${summary.highRiskMinutes.toFixed(1)} min` : '--';
+  alertCount.textContent = summary.alertCount != null ? summary.alertCount : '--';
+  neutralTime.textContent = summary.totalTime != null ? `${(summary.totalTime - summary.highRiskMinutes).toFixed(1)} min` : '--';
+  motionExposure.textContent = summary.exposurePercent != null ? `${summary.exposurePercent}%` : '--';
+  breakRecommendation.textContent = summary.breakRecommendation || '--';
+}
+
+// Updates session summary in Firebase
+async function updateSessionSummary(userID, sessionId, summary) {
+  if (!sessionId) return;
+  try {
+    await update(ref(db, `users/${userID}/sessions/${sessionId}/summary`), summary);
+  } catch (error) {
+    console.error('Unable to update session summary:', error);
+  }
+}
+
+// Gets session summary from Firebase
+async function getSessionSummary(userID, sessionId) {
+  if (!sessionId) return null;
+  const dbref = ref(db);
+  const snapshot = await get(child(dbref, `users/${userID}/sessions/${sessionId}/summary`));
+  return snapshot.exists() ? snapshot.val() : null;
+}
+
+// --------------------- Data and Chart Functions ----------------------------
+
+// Gets session sensor data from Firebase
+async function getSessionData(userID, sessionId, dataType) {
+  const items = [];
+  const dbref = ref(db);
+
+  await get(child(dbref, `users/${userID}/sessions/${sessionId}/data/${dataType}`)).then((snapshot) => {
+    if (snapshot.exists()) {
+      snapshot.forEach(child => {
+        const key = Number(child.key);
+        if (!Number.isNaN(key)) {
+          items.push({ index: key, value: child.val() });
+        }
+      });
+    }
+  })
+  .catch((error) => {
+    alert('Unsuccessful, error: ' + error);
+  });
+
+  items.sort((a, b) => a.index - b.index);
+  return items.map((item) => ({ x: item.index, y: item.value }));
+}
+
+// Creates a chart from sensor data
 async function createChart(dataType, id, sessionId = activeSessionId, updateSummary = true){
   let data = [];
   if (sessionId) {
@@ -597,7 +517,7 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
   }
 
   const lineChart = document.getElementById(id);
-
+  
   const chart = new Chart(lineChart, {  // Construct the chart    
     type: 'line',
     data: {                         // Define data
@@ -724,11 +644,85 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
   });
 
   if (updateSummary) {
-    updateDashboardSummary(dataType, data);
+    updateDashboardSummary();
   }
   return chart;
 }
 
+// Updates chart data in real-time
+async function updateChartData(chart, dataType) {
+  if (!activeSessionId) return;
+  try {
+    setDataActivityStatus(true);
+    const newData = await getSessionData(window.currentUser.uid, activeSessionId, dataType);
+
+    // Update the chart's data
+    chart.data.datasets[0].data = newData;
+
+    // Update the chart to reflect new data
+    chart.update('none'); // 'none' prevents animation for smoother real-time updates
+    await updateDashboardSummary();
+  } catch (error) {
+    console.error('Error updating chart data:', error);
+    setDataActivityStatus(false);
+  }
+}
+
+// Starts real-time updates
+function startRealTimeUpdates(dataType) {
+  isCollecting = true;
+  if (sessionDataStarted) {
+    fetch('/session-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collecting: true, reset: false })
+    }).catch(error => {
+      console.error('Unable to start session data collection on backend:', error);
+    });
+  } else {
+    sessionDataStarted = true;
+    fetch('/session-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collecting: true, reset: true })
+    }).catch(error => {
+      console.error('Unable to start session data collection on backend:', error);
+    });
+  }
+  updateCollectButtonState();
+
+  // Clear any existing interval
+  if (updateInterval) {
+    clearInterval(updateInterval);
+  }
+
+  // Update every 0.5 seconds (adjust as needed)
+  updateInterval = setInterval(() => {
+    if (sensorChart && window.currentUser) {
+      updateChartData(sensorChart, dataType);
+    }
+  }, 500);
+}
+
+// Stops real-time updates
+function stopRealTimeUpdates() {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+    updateInterval = null;
+  }
+  isCollecting = false;
+  fetch('/session-data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ collecting: false, reset: false })
+  }).catch(error => {
+    console.error('Unable to stop session data collection on backend:', error);
+  });
+  updateCollectButtonState();
+  setDataActivityStatus(false);
+}
+
+// Destroys history chart instance
 function destroyHistoryChart() {
   if (historyChart && typeof historyChart.destroy === 'function') {
     historyChart.destroy();
@@ -736,19 +730,9 @@ function destroyHistoryChart() {
   historyChart = null;
 }
 
-// -------------------------Delete a dataset from FRD ---------------------
-async function deleteDataSet(userID, dataType) {
-  await remove(ref(db, 'users/' + userID + '/data/' + dataType))
-  .then(() => {
-    alert('Data removed successfully');
-  })
-  .catch((error) => {
-    alert('Unsuccessful, error: ' + error);
-  });
-}
-
 // --------------------------- Home Page Loading -----------------------------
-window.addEventListener('DOMContentLoaded', async function() {
+window.addEventListener('DOMContentLoaded', async () => {
+  // Check if signed in, if not redirect to sign-in page
   if (!window.currentUser) {
     const storedUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || 'null');
     if (storedUser) {
@@ -757,16 +741,14 @@ window.addEventListener('DOMContentLoaded', async function() {
   }
 
   if (!window.currentUser) {
-    alert("No user is currently signed in. Redirecting to sign in page.");
     window.location = "/signIn";
     return;
   }
 
+  // Initialize dashboard
   activeSessionId = null;
   activeSessionName = '';
   selectedHistorySessionId = '';
-
-  sensorChart = await createChart('bend', 'sensorGraph');
 
   updateCollectButtonState();
   setCurrentSessionLabel('No active session');
@@ -774,13 +756,17 @@ window.addEventListener('DOMContentLoaded', async function() {
 
   await loadSessions(window.currentUser.uid);
 
+  sensorChart = await createChart(dataType, 'sensorGraph');
+
+  historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false);
+
   // Track Firebase connectivity state
   const connectedRef = ref(db, '.info/connected');
   onValue(connectedRef, (snapshot) => {
     setConnectionStatus(snapshot.val() === true);
   });
 
-  // Create a new chart with the selected data type when the dropdown value changes
+  // Update graph on sensor type dropdown change
   document.getElementById('dataType').addEventListener('change', (event) => {
     dataType = event.target.value;
 
@@ -796,24 +782,16 @@ window.addEventListener('DOMContentLoaded', async function() {
     });
   });
 
+  // Update history graph on history sensor type dropdown change
   document.getElementById('historyDataType').addEventListener('change', async (event) => {
     historyDataType = event.target.value;
-
-    if (selectedHistorySessionId) {
-      destroyHistoryChart();
-      historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false);
-    }
+    destroyHistoryChart();
+    historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false);
   });
 
+  // Update history graph on session selection change
   document.getElementById('historySessions').addEventListener('change', async (event) => {
     selectedHistorySessionId = event.target.value;
-    if (!selectedHistorySessionId) {
-      destroyHistoryChart();
-      updateHistorySummary(null);
-      updateHistoryControls();
-      return;
-    }
-
     const summary = await getSessionSummary(window.currentUser.uid, selectedHistorySessionId);
     updateHistorySummary(summary);
     destroyHistoryChart();
@@ -821,6 +799,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     updateHistoryControls();
   });
 
+  // Start/pause data collection on collect button click
   document.getElementById('collectBtn').addEventListener('click', async () => {
     if (!activeSessionId) {
       alert('Please create a session before collecting data.');
@@ -834,6 +813,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     }
   });
 
+  // Create new session on new session button click
   document.getElementById('newSessionBtn').addEventListener('click', async () => {
     if (!activeSessionId) {
       const userID = window.currentUser.uid;
@@ -843,10 +823,17 @@ window.addEventListener('DOMContentLoaded', async function() {
       const newSession = await createSession(userID);
       if (newSession) {
         setCurrentSession(newSession);
+        if (sensorChart && typeof sensorChart.destroy === 'function') {
+          sensorChart.destroy();
+        }
+        createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
+          sensorChart = chart;
+        });
       }
     }
   });
 
+  // End session on end session button click (in modal)
   document.getElementById('endSessionBtn').addEventListener('click', async () => {
     if (activeSessionId) {
       const userID = window.currentUser.uid;
@@ -868,7 +855,6 @@ window.addEventListener('DOMContentLoaded', async function() {
 
       activeSessionId = null;
       activeSessionName = '';
-      sessionDataCounts = { bend: 0, emg: 0, imu: 0 };
       await setServerSessionId(null);
       setCurrentSessionLabel('No active session');
       updateSessionControls();
@@ -879,6 +865,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     }
   });
 
+  // Delete past session on delete session button click
   document.getElementById('deleteSessionBtn').addEventListener('click', async () => {
     const sessionsSelect = document.getElementById('historySessions');
     const selectedSession = sessionsSelect ? sessionsSelect.value : '';
