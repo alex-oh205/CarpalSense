@@ -4,7 +4,7 @@
 //
 // SENSORS:
 //   Flex sensor → A6
-//   EMG sensor  → A1
+//   EMG sensor  → A5
 //
 // OUTPUT:
 //   Serial Monitor only (no buzzer)
@@ -72,7 +72,7 @@ const int FLEX_BWD_DANGER  = -50;
 // ============================================================
 // EMG SENSOR SETUP
 // ============================================================
-const int EMG_PIN = A1;
+const int EMG_PIN = A5;
 
 // Calibration
 const int CALIBRATION_SECONDS = 30;

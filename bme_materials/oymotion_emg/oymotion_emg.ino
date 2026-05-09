@@ -51,8 +51,9 @@ unsigned long windowStart = 0;
 long          windowMin   = LONG_MAX;
 long          windowMax   = 0;
 
-const char* levelLabel(int level) {
-    switch (level) {
+int   level = 0;
+const char* levelLabel(int lvl) {
+    switch (lvl) {
         case 0:  return "No Contraction";
         case 1:  return "Low";
         case 2:  return "Medium";
@@ -69,10 +70,10 @@ void setup() {
     Serial.begin(115200);
     delay(1000);
 
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < 2000; i++) {
         analogRead(SensorInputPin);
         int Value = analogRead(SensorInputPin);
-        myFilter.update(Value - 1901);
+        myFilter.update(Value - 3700);
         delayMicroseconds(2000);
     }
 
@@ -87,7 +88,7 @@ void loop() {
     // ── Data Collection
     analogRead(SensorInputPin);
     int Value     = analogRead(SensorInputPin);
-    int centered  = Value - 1901;
+    int centered  = Value - 3700;
     int filtered  = myFilter.update(centered);
     long envelope = (long)filtered * filtered;
     long smoothed = computeRMS(envelope);
@@ -100,7 +101,6 @@ void loop() {
     unsigned long now = millis();
     if (now - windowStart >= WINDOW_MS) {
 
-        int   level = 0;
         float pct   = 0.0f;
 
         if (windowMin > 0) {
