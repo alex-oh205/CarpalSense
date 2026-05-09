@@ -6,14 +6,18 @@
 import pyrebase
 from flask import Flask, render_template, url_for, request, jsonify, redirect
 from datetime import datetime
+import time
 
 
 app = Flask(__name__)       # Creates the app
 
 config = {}
-key = 0
+sessionTime = 0
+prevSessionTime = 0
+collectingData = False
 currentUser = None
 idToken = None
+currentSessionId = None
 
 # Index page
 @app.route("/")             # Index page route  
@@ -53,11 +57,12 @@ def signIn():              # Returns the sign in page
 # Logout route
 @app.route("/logout")
 def logout():
-    global currentUser, idToken, config, key
+    global currentUser, idToken, config, time, currentSessionId
     currentUser = None
     idToken = None
     config = {}
-    key = 0
+    sessionTime = 0
+    currentSessionId = None
     return redirect(url_for('signIn'))
 
 @app.context_processor
@@ -67,7 +72,7 @@ def inject_globals():
 # Route to Pyrebase setup and transfer Arduino data to Firebase
 @app.route('/data', methods=['GET', 'POST'])
 def data():
-    global config, currentUser, db, timeStamp, key, idToken
+    global config, currentUser, db, timeStamp, sessionTime, idToken
 
     # POST request (FB configuration sent from login.js, request.method defaults to GET)
     if request.method == 'POST':
@@ -109,26 +114,64 @@ def data():
         if not config or not currentUser:
             print("FB config is empty or user is not signed in")
         else:
-            # Take parameters from Arduino request & assign value to variable "value"
+            if collectingData:
+                # Take parameters from Arduino request & assign value to variable "value"
+                bend = request.args.get('bend')
+                emg = request.args.get('emg')
+                # imu = request.args.get('imu')
 
-            # print(config)
-            bend = request.args.get('bend')
-            emg = request.args.get('emg')
-            # imu = request.args.get('imu')
+                print('Bend: ' + str(bend), flush=True)
+                print('EMG: ' + str(emg), flush=True)
+                # print('IMU: ' + imu, flush=True)
 
-            print('Bend: ' + bend, flush=True)
-            print('EMG: ' + emg, flush=True)
-            # print('IMU: ' + imu, flush=True)
+                uid = currentUser['uid'] if isinstance(currentUser, dict) else currentUser
+                sessionTime += time.perf_counter() - prevSessionTime
+                prevSessionTime = time.perf_counter()
 
-            # Write Arduino data to Firebase
-            db.child('users/' + currentUser['uid'] + '/data/bend').update({key: bend}, idToken)
-            db.child('users/' + currentUser['uid'] + '/data/emg').update({key: emg}, idToken)
-            # db.child('users/' + currentUser['uid'] + '/data/imu').update({key: imu}, idToken)
-
-            # Increment key
-            key += 1
+                # Write Arduino data to Firebase under the currently active session if one is registered
+                if currentSessionId:
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({sessionTime: bend}, idToken)
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/emg').update({sessionTime: emg}, idToken)
+                    # db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/imu').update({sessionTime: imu}, idToken)
         
         return 'Success', 200
+
+@app.route('/session', methods=['POST'])
+def session():
+    global currentSessionId, collectingData, sessionTime, config, currentUser, db, idToken
+    payload = request.get_json() or {}
+    session_id = payload.get('sessionId')
+    currentSessionId = session_id if session_id else None
+    collectingData = False
+    sessionTime = 0
+    if config and currentUser and db and idToken and currentSessionId:
+        lastData = db.child('users/' + currentUser['uid'] + '/sessions/' + currentSessionId +'/data/bend').order_by_key().limit_to_last(1).get(idToken)
+        if lastData.each():
+            for item in lastData.each():
+                sessionTime = float(item.key())
+        else:
+            sessionTime = 0
+    
+    return 'Success', 200
+
+@app.route('/session-data', methods=['POST'])
+def session_data():
+    global collectingData, sessionTime, prevSessionTime
+
+    payload = request.get_json() or {}
+    collecting = payload.get('collecting', False)
+    reset = payload.get('reset', False)
+    print(f"Collecting: {collecting}, Reset: {reset}", flush=True)
+    if collecting:
+        collectingData = True
+        prevSessionTime = time.perf_counter()
+    else:
+        collectingData = False
+    
+    if reset:
+        sessionTime = 0
+    
+    return 'Success', 200
 
 # Main driving function
 if __name__ == "__main__":

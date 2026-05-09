@@ -390,7 +390,7 @@ body:has(.dashboard) {
 }
 
 .chart-panel {
-    height: 420px;
+    height: 430px;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.06) !important;
     position: relative;

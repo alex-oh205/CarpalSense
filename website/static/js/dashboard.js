@@ -34,56 +34,196 @@ const db = getDatabase();
 
 // --------------------- Get reference values -----------------------------
 let sensorChart = null;                               // Chart instance reference
+let historyChart = null;                              // History chart instance reference
 let updateInterval = null;                            // Real-time update interval reference
+let dataType = 'bend';
+let historyDataType = 'bend';
 let isCollecting = false;
+let sessionDataStarted = false;
+let activeSessionId = null;                            // Currently recording session
+let activeSessionName = '';
+let selectedHistorySessionId = '';
+let sessionDataCounts = { bend: 0, emg: 0, imu: 0 };
 
 function updateCollectButtonState() {
   const collectBtn = document.getElementById('collectBtn');
   if (!collectBtn) return;
   if (isCollecting) {
-    collectBtn.textContent = 'Stop';
-    collectBtn.className = 'btn btn-outline-danger w-100';
+    collectBtn.textContent = 'Pause';
+    collectBtn.classList.remove('btn-outline-success');
+    collectBtn.classList.add('btn-outline-warning');
   } else {
     collectBtn.textContent = 'Start';
-    collectBtn.className = 'btn btn-outline-success w-100';
+    collectBtn.classList.remove('btn-outline-warning');
+    collectBtn.classList.add('btn-outline-success');
   }
+}
+
+function updateSessionControls() {
+  const collectBtn = document.getElementById('collectBtn');
+  const newSessionBtn = document.getElementById('newSessionBtn');
+
+  if (!collectBtn || !newSessionBtn) return;
+
+  collectBtn.disabled = !activeSessionId;
+  newSessionBtn.disabled = false;
+  newSessionBtn.textContent = activeSessionId ? 'End Session' : 'New Session';
+  
+  if (activeSessionId) {
+    updateCollectButtonState();
+    newSessionBtn.classList.remove('btn-outline-info');
+    newSessionBtn.classList.add('btn-outline-danger');
+    newSessionBtn.setAttribute('data-bs-toggle', 'modal');
+    newSessionBtn.setAttribute('data-bs-target', '#endSessionModal');
+  } else {
+    collectBtn.textContent = 'Start';
+    collectBtn.classList.remove('btn-outline-warning');
+    collectBtn.classList.add('btn-outline-success');
+    newSessionBtn.classList.remove('btn-outline-danger');
+    newSessionBtn.classList.add('btn-outline-info');
+    newSessionBtn.removeAttribute('data-bs-toggle');
+    newSessionBtn.removeAttribute('data-bs-target');
+  }
+}
+
+function setCurrentSessionLabel(label) {
+  const labelEl = document.getElementById('currentSessionLabel');
+  if (!labelEl) return;
+  labelEl.textContent = label || 'No active session';
+}
+
+function updateHistoryControls() {
+  const deleteBtn = document.getElementById('deleteSessionBtn');
+  deleteBtn.disabled = !selectedHistorySessionId;
+}
+
+async function getSessionSummary(userID, sessionId) {
+  if (!sessionId) return null;
+  const dbref = ref(db);
+  const snapshot = await get(child(dbref, `users/${userID}/sessions/${sessionId}/summary`));
+  return snapshot.exists() ? snapshot.val() : null;
+}
+
+function updateHistorySummary(summary) {
+  const riskLevel = document.getElementById('historyRiskLevel');
+  const highRiskMinutes = document.getElementById('historyHighRiskMinutes');
+  const alertCount = document.getElementById('historyAlertCount');
+  const neutralTime = document.getElementById('historyNeutralTime');
+  const motionExposure = document.getElementById('historyMotionExposure');
+  const breakRecommendation = document.getElementById('historyBreakRecommendation');
+
+  if (!riskLevel || !highRiskMinutes || !alertCount || !neutralTime || !motionExposure || !breakRecommendation) return;
+
+  if (!summary) {
+    riskLevel.textContent = '--';
+    highRiskMinutes.textContent = '--';
+    alertCount.textContent = '--';
+    neutralTime.textContent = '--';
+    motionExposure.textContent = '--';
+    breakRecommendation.textContent = '--';
+    return;
+  }
+
+  riskLevel.textContent = summary.riskLabel || '--';
+  highRiskMinutes.textContent = summary.highRiskMinutes != null ? `${summary.highRiskMinutes} min` : '--';
+  alertCount.textContent = summary.alertCount != null ? summary.alertCount : '--';
+  neutralTime.textContent = summary.neutralPercent != null ? `${Math.round((summary.neutralPercent / 100) * 60)} min` : '--';
+  motionExposure.textContent = summary.exposurePercent != null ? `${summary.exposurePercent}%` : '--';
+  breakRecommendation.textContent = summary.breakRecommendation || '--';
 }
 
 function setConnectionStatus(isConnected) {
   const status = document.getElementById('connectionStatus');
-  if (!status) return;
   status.textContent = isConnected ? 'Connected' : 'Disconnected';
   status.className = `badge rounded-pill status-badge ${isConnected ? 'status-good' : 'status-critical'}`;
 }
 
 function setDataActivityStatus(isActive) {
   const mode = document.getElementById('modeStatus');
-  if (!mode) return;
   mode.textContent = isActive ? 'Active' : 'No updates';
   mode.className = `badge rounded-pill status-badge ${isActive ? 'status-good' : 'status-warning'}`;
+}
+
+async function setServerSessionId(sessionId) {
+  try {
+    await fetch('/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId })
+    });
+  } catch (error) {
+    console.error('Unable to register session with backend:', error);
+  }
 }
 
 // Function to update chart data in real-time
 async function updateChartData(chart, dataType) {
   try {
+    setDataActivityStatus(true);
     const newData = await getDataSet(window.currentUser.uid, dataType);
+
+    // Cache data count for session writes
+    if (activeSessionId) {
+      await syncSessionData(window.currentUser.uid, activeSessionId, dataType, newData);
+    }
 
     // Update the chart's data
     chart.data.datasets[0].data = newData;
 
     // Update the chart to reflect new data
     chart.update('none'); // 'none' prevents animation for smoother real-time updates
-    updateDashboardSummary(dataType, chart.data.datasets[0].data);
-    setDataActivityStatus(true);
+    const summary = updateDashboardSummary(dataType, chart.data.datasets[0].data);
+    if (activeSessionId) {
+      await updateSessionSummary(window.currentUser.uid, activeSessionId, summary);
+    }
   } catch (error) {
     console.error('Error updating chart data:', error);
     setDataActivityStatus(false);
   }
 }
 
+async function syncSessionData(userID, sessionId, dataType, data) {
+  if (!data || !data.length || !sessionId) return;
+
+  const currentCount = sessionDataCounts[dataType] || 0;
+  if (data.length <= currentCount) return;
+
+  const newPoints = data.slice(currentCount);
+  const updates = {};
+  newPoints.forEach(point => {
+    const key = point.x;
+    updates[`users/${userID}/sessions/${sessionId}/data/${dataType}/${key}`] = point.y;
+  });
+
+  try {
+    await update(ref(db), updates);
+    sessionDataCounts[dataType] = data.length;
+  } catch (error) {
+    console.error('Error writing session data:', error);
+  }
+}
+
 // Function to start real-time updates
 function startRealTimeUpdates(dataType) {
   isCollecting = true;
+  if (sessionDataStarted) {
+    fetch('/session-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collecting: true, reset: false })
+    }).catch(error => {
+      console.error('Unable to start session data collection on backend:', error);
+    });
+  } else {
+    sessionDataStarted = true;
+    fetch('/session-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collecting: true, reset: true })
+    }).catch(error => {
+      console.error('Unable to start session data collection on backend:', error);
+    });
+  }
   updateCollectButtonState();
 
   // Clear any existing interval
@@ -106,94 +246,159 @@ function stopRealTimeUpdates() {
     updateInterval = null;
   }
   isCollecting = false;
+  fetch('/session-data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ collecting: false, reset: false })
+  }).catch(error => {
+    console.error('Unable to stop session data collection on backend:', error);
+  });
   updateCollectButtonState();
   setDataActivityStatus(false);
 }
-
-// ------------------------Set (insert) data into FRD ------------------------
-// function setData(userID, dataType, index, value) {
-//   // Must use brackets around variable names to use it as a key
-//   set(ref(db, 'users/' + userID + '/data/' + dataType + '/' + index), {
-//     [index]: value
-//   })
-//   .then(() => {
-//     alert("Data stored successfully.");
-//   })
-//   .catch((error) => {
-//     alert("There was an error. Error: " + error);
-//   });
-// }
-
-// -------------------------Update data in database --------------------------
-// function updateData(userID, dataType, index, value) {
-//   // Must use brackets around variable names to use it as a key
-//   update(ref(db, 'users/' + userID + '/data/' + dataType + '/' + index), {
-//     [index]: value
-//   })
-//   .then(() => {
-//     alert("Data stored successfully.");
-//   })
-//   .catch((error) => {
-//     alert("There was an error. Error: " + error);
-//   });
-// }
-
-// ----------------------Get a datum from FRD (single data point)---------------
-// function getData(userID, dataType, index) {
-//   let dataTypeVal = document.getElementById('dataTypeVal');
-//   let indexVal = document.getElementById('indexVal');
-//   let sensorVal = document.getElementById('sensorVal');
-
-//   const dbref = ref(db); // Firebase parameter for getting data
-
-//   // Provide the path through the nodes to the data
-//   get(child(dbref, 'users/' + userID + '/data/' + dataType + '/' + index))
-//     .then((snapshot) => {
-//       if (snapshot.exists()) {
-//         dataTypeVal.textContent = dataType;
-//         indexVal.textContent = index;
-        
-//         // To get specific value from the provided key: snapshot.val()[key]
-//         sensorVal.textContent = snapshot.val()[index];
-//       } else {
-//         alert('No data found.');
-//       }
-//     })
-//     .catch((error) => {
-//       alert('Unsuccessful, error: ' + error);
-//     });
-// }
 
 // ---------------------------Get a data set --------------------------
 // Must be an async function because you need to get all the data from FRD
 // before you can process it for a table or graph
 async function getDataSet(userID, dataType) {
-  const indexes = [];
-  const values = [];
-
+  const items = [];
   const dbref = ref(db); // Firebase parameter to access database
 
-  // Wait for all data to be pulled from FRD
-  // Must provide the path through the nodes
   await get(child(dbref, 'users/' + userID + '/data/' + dataType)).then((snapshot) => {
     if (snapshot.exists()) {
-      // console.log(snapshot.val());
-
       snapshot.forEach(child => {
-        // console.log(child.key, child.val());
-        // Push values to the corresponding arrays
-        indexes.push(child.key);
-        values.push(child.val());
+        const key = Number(child.key);
+        if (!Number.isNaN(key)) {
+          items.push({ index: key, value: child.val() });
+        }
       });
-    } else {
-      // alert('No data found');
     }
   })
   .catch((error) => {
     alert('Unsuccessful, error: ' + error);
   });
 
-  return indexes.map((index, i) => ({ x: index, y: values[i] })); // Return array of objects with x and y values for graphing
+  items.sort((a, b) => a.index - b.index);
+  return items.map((item) => ({ x: item.index, y: item.value })); // Return array of objects with x and y values for graphing
+}
+
+async function getSessionData(userID, sessionId, dataType) {
+  const items = [];
+  const dbref = ref(db);
+
+  await get(child(dbref, `users/${userID}/sessions/${sessionId}/data/${dataType}`)).then((snapshot) => {
+    if (snapshot.exists()) {
+      snapshot.forEach(child => {
+        const key = Number(child.key);
+        if (!Number.isNaN(key)) {
+          items.push({ index: key, value: child.val() });
+        }
+      });
+    }
+  })
+  .catch((error) => {
+    alert('Unsuccessful, error: ' + error);
+  });
+
+  items.sort((a, b) => a.index - b.index);
+  return items.map((item) => ({ x: item.index, y: item.value }));
+}
+
+async function loadSessions(userID) {
+  const sessionsSelect = document.getElementById('historySessions');
+  if (!sessionsSelect) return;
+
+  sessionsSelect.innerHTML = '';
+  sessionsSelect.append(new Option('Select a session', '', true, true));
+
+  const dbref = ref(db);
+  await get(child(dbref, `users/${userID}/sessions`)).then((snapshot) => {
+    if (snapshot.exists()) {
+      snapshot.forEach(child => {
+        const session = child.val();
+        if (session.active) {
+          if (activeSessionId !== session.id) {
+            sessionDataStarted = true;
+            setCurrentSession(session);
+          }
+        } else {
+          const label = session.name || `Session ${new Date(session.createdAt).toLocaleString()}`;
+          sessionsSelect.append(new Option(label, child.key));
+        }
+      });
+    }
+  })
+  .catch((error) => {
+    console.error('Unable to load sessions:', error);
+  });
+
+  updateSessionControls();
+  updateHistoryControls();
+}
+
+async function createSession(userID) {
+  const createdAt = Date.now();
+  const id = `session-${createdAt}`;
+  const sessionName = `Session ${new Date(createdAt).toLocaleString()}`;
+  const session = {
+    createdAt,
+    id,
+    name: sessionName,
+    active: true,
+    summary: {
+      riskLabel: 'Waiting for data',
+      highRiskMinutes: 0,
+      alertCount: 0,
+      neutralPercent: 100,
+      exposurePercent: 0,
+      breakRecommendation: 'Waiting for first sensor values'
+    }
+  };
+  try {
+    await update(ref(db, `users/${userID}/sessions/${id}`), session);
+    return { id, name: sessionName };
+  } catch (error) {
+    console.error('Unable to create session:', error);
+    return null;
+  }
+}
+
+async function setCurrentSession(session) {
+  activeSessionId = session.id;
+  activeSessionName = session.name;
+  sessionDataCounts = { bend: 0, emg: 0, imu: 0 };
+  await setServerSessionId(activeSessionId);
+  setCurrentSessionLabel(activeSessionName);
+  updateSessionControls();
+  if (sensorChart && typeof sensorChart.destroy === 'function') {
+    sensorChart.destroy();
+  }
+  createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
+    sensorChart = chart;
+  });
+}
+
+async function updateSessionSummary(userID, sessionId, summary) {
+  if (!sessionId) return;
+  try {
+    await update(ref(db, `users/${userID}/sessions/${sessionId}/summary`), summary);
+  } catch (error) {
+    console.error('Unable to update session summary:', error);
+  }
+}
+
+async function deleteSession(userID, sessionId) {
+  if (!sessionId) return;
+  try {
+    await remove(ref(db, `users/${userID}/sessions/${sessionId}`));
+    if (activeSessionId === sessionId) {
+      activeSessionId = null;
+      sessionDataCounts = { bend: 0, emg: 0, imu: 0 };
+      isCollecting = false;
+    }
+  } catch (error) {
+    console.error('Unable to delete session:', error);
+  }
 }
 
 function formatTimestamp(date) {
@@ -322,13 +527,14 @@ function updateDashboardSummary(dataType, data) {
   motionExposure.textContent = `${summary.exposurePercent}%`;
   breakRecommendation.textContent = summary.breakRecommendation;
   buildAlerts(summary.alerts);
+  return summary;
 }
 
 // Function that creates a chart from sensor data
-async function createChart(dataType, id){
-  let data;
-  if (["bend", "emg", "imu"].includes(dataType)) {
-    data = await getDataSet(window.currentUser.uid, dataType);
+async function createChart(dataType, id, sessionId = activeSessionId, updateSummary = true){
+  let data = [];
+  if (sessionId) {
+    data = await getSessionData(window.currentUser.uid, sessionId, dataType);
   }
 
   let label = '';
@@ -517,20 +723,18 @@ async function createChart(dataType, id){
     }
   });
 
-  updateDashboardSummary(dataType, data);
+  if (updateSummary) {
+    updateDashboardSummary(dataType, data);
+  }
   return chart;
 }
 
-// // -------------------------Delete a data point from FRD ---------------------
-// function deleteData(userID, dataType, index) {
-//   remove(ref(db, 'users/' + userID + '/data/' + dataType + '/' + index))
-//   .then(() => {
-//     alert('Data removed successfully');
-//   })
-//   .catch((error) => {
-//     alert('Unsuccessful, error: ' + error);
-//   });
-// }
+function destroyHistoryChart() {
+  if (historyChart && typeof historyChart.destroy === 'function') {
+    historyChart.destroy();
+  }
+  historyChart = null;
+}
 
 // -------------------------Delete a dataset from FRD ---------------------
 async function deleteDataSet(userID, dataType) {
@@ -544,7 +748,7 @@ async function deleteDataSet(userID, dataType) {
 }
 
 // --------------------------- Home Page Loading -----------------------------
-window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', async function() {
   if (!window.currentUser) {
     const storedUser = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || 'null');
     if (storedUser) {
@@ -555,13 +759,20 @@ window.addEventListener('DOMContentLoaded', function() {
   if (!window.currentUser) {
     alert("No user is currently signed in. Redirecting to sign in page.");
     window.location = "/signIn";
+    return;
   }
 
-  createChart('bend', 'sensorGraph').then(chart => {
-    sensorChart = chart;
-    updateCollectButtonState();
-    setDataActivityStatus(false);
-  });
+  activeSessionId = null;
+  activeSessionName = '';
+  selectedHistorySessionId = '';
+
+  sensorChart = await createChart('bend', 'sensorGraph');
+
+  updateCollectButtonState();
+  setCurrentSessionLabel('No active session');
+  setDataActivityStatus(false);
+
+  await loadSessions(window.currentUser.uid);
 
   // Track Firebase connectivity state
   const connectedRef = ref(db, '.info/connected');
@@ -571,7 +782,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
   // Create a new chart with the selected data type when the dropdown value changes
   document.getElementById('dataType').addEventListener('change', (event) => {
-    const dataType = event.target.value;
+    dataType = event.target.value;
 
     if (sensorChart && typeof sensorChart.destroy === 'function') {
       sensorChart.destroy(); // Destroy current chart before creating new one
@@ -579,14 +790,42 @@ window.addEventListener('DOMContentLoaded', function() {
 
     createChart(dataType, 'sensorGraph').then(chart => {
       sensorChart = chart;
-      if (isCollecting) {
+      if (isCollecting && activeSessionId) {
         startRealTimeUpdates(dataType);
       }
     });
   });
 
-  document.getElementById('collectBtn').addEventListener('click', () => {
-    const dataType = document.getElementById('dataType').value;
+  document.getElementById('historyDataType').addEventListener('change', async (event) => {
+    historyDataType = event.target.value;
+
+    if (selectedHistorySessionId) {
+      destroyHistoryChart();
+      historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false);
+    }
+  });
+
+  document.getElementById('historySessions').addEventListener('change', async (event) => {
+    selectedHistorySessionId = event.target.value;
+    if (!selectedHistorySessionId) {
+      destroyHistoryChart();
+      updateHistorySummary(null);
+      updateHistoryControls();
+      return;
+    }
+
+    const summary = await getSessionSummary(window.currentUser.uid, selectedHistorySessionId);
+    updateHistorySummary(summary);
+    destroyHistoryChart();
+    historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false);
+    updateHistoryControls();
+  });
+
+  document.getElementById('collectBtn').addEventListener('click', async () => {
+    if (!activeSessionId) {
+      alert('Please create a session before collecting data.');
+      return;
+    }
 
     if (isCollecting) {
       stopRealTimeUpdates();
@@ -595,29 +834,80 @@ window.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Delete a single day's data function call
-  document.getElementById('delete').addEventListener('click', async function() {
-    if (confirm("Are you sure you want to reset the graph? This will delete all your data for this sensor.")) {
-      const dataType = document.getElementById('dataType').value;
+  document.getElementById('newSessionBtn').addEventListener('click', async () => {
+    if (!activeSessionId) {
       const userID = window.currentUser.uid;
-      const wasCollecting = isCollecting;
 
-      // Stop real-time updates while deleting
       stopRealTimeUpdates();
 
-      await deleteDataSet(userID, dataType);
+      const newSession = await createSession(userID);
+      if (newSession) {
+        setCurrentSession(newSession);
+      }
+    }
+  });
 
-      if (sensorChart && typeof sensorChart.destroy === 'function') {
-        sensorChart.destroy(); // Destroy current chart before creating new one
+  document.getElementById('endSessionBtn').addEventListener('click', async () => {
+    if (activeSessionId) {
+      const userID = window.currentUser.uid;
+      const sessionsSelect = document.getElementById('historySessions');
+      
+      stopRealTimeUpdates();
+
+      try {
+        await update(ref(db, `users/${userID}/sessions/${activeSessionId}`), { active: false });
+      } catch (error) {
+        console.error('Unable to end session:', error);
       }
 
+      await loadSessions(userID);
+      if (sessionsSelect) {
+        sessionsSelect.value = '';
+      }
+      selectedHistorySessionId = '';
+
+      activeSessionId = null;
+      activeSessionName = '';
+      sessionDataCounts = { bend: 0, emg: 0, imu: 0 };
+      await setServerSessionId(null);
+      setCurrentSessionLabel('No active session');
+      updateSessionControls();
+
+      const modal = document.getElementById('endSessionModal');
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      modalInstance.hide();
+    }
+  });
+
+  document.getElementById('deleteSessionBtn').addEventListener('click', async () => {
+    const sessionsSelect = document.getElementById('historySessions');
+    const selectedSession = sessionsSelect ? sessionsSelect.value : '';
+    if (!selectedSession) return;
+
+    if (confirm('Delete this session permanently? This cannot be undone.')) {
+      const userID = window.currentUser.uid;
+      await deleteSession(userID, selectedSession);
+      if (activeSessionId === selectedSession) {
+        activeSessionId = null;
+        activeSessionName = '';
+        stopRealTimeUpdates();
+        await setServerSessionId(null);
+        setCurrentSessionLabel('No active session');
+        updateSessionControls();
+      }
+      selectedHistorySessionId = '';
+      await loadSessions(userID);
+      if (sessionsSelect) {
+        sessionsSelect.value = '';
+      }
+      destroyHistoryChart();
+      updateHistorySummary(null);
+      updateHistoryControls();
+      if (sensorChart && typeof sensorChart.destroy === 'function') {
+        sensorChart.destroy();
+      }
       createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
         sensorChart = chart;
-        if (wasCollecting) {
-          startRealTimeUpdates(dataType);
-        } else {
-          updateCollectButtonState();
-        }
       });
     }
   });
