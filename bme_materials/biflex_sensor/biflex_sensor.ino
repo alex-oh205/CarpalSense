@@ -9,11 +9,12 @@ const float R_DIV    = 47000.0;
 //   1. Hold sensor completely flat  → note raw, set rawFlat
 //   2. Bend fully FORWARD (normal)  → note raw, set rawForward
 //   3. Bend fully BACKWARD          → note raw, set rawBackward
-int rawFlat     = 22;  // Resting flat value
+int rawFlat     = 22;0  // Resting flat value
 int rawForward  = 7;  // Raw when fully bent forward 
 int rawBackward = 40;  // Raw when fully bent backward
 
 const int DEADZONE = 2;
+int returnValue = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -61,14 +62,26 @@ void loop() {
 
   if (position > DEADZONE) {
     direction = "FORWARD";
-    if      (position < 30) zone = "Slight";
-    else if (position < 65) zone = "Moderate";
-    else                    zone = "Full";
+    if      (position < 40) {
+      zone = "Slight";
+      returnValue = 1;
+    } else if (position < 75) {
+      zone = "Moderate"; 
+      returnValue = 2;
+    } else                    {
+      zone = "Full";
+      returnValue = 3; }
   } else if (position < -DEADZONE) {
     direction = "BACKWARD";
-    if      (position > -30) zone = "Slight";
-    else if (position > -65) zone = "Moderate";
-    else                     zone = "Full";
+    if      (position > -30) {
+      zone = "Slight";
+      returnValue = 1;
+    } else if (position > -55) {
+      zone = "Moderate";
+      returnValue = 2;
+    } else {                     
+      zone = "Full";
+      returnValue = 3; }
   } else {
     direction = "FLAT";
     zone = "";
@@ -86,7 +99,10 @@ void loop() {
   Serial.print(" | ");
   Serial.print(direction);
   Serial.print(" ");
-  Serial.println(zone);
+  Serial.print(zone);
+  Serial.print("| ");
+  Serial.println(returnValue);
+
 
   delay(1000);
 }
