@@ -28,6 +28,8 @@ int flex_rawBackward = 40;  // Raw when fully bent backward
 
 const int flex_DEADZONE = 2;
 int returnValue = 0;        // Flex sensor output: 0 (flat) to 3 (full bend)
+int level = 0;             // EMG output: 0 (no contraction) to 3 (high contraction)
+
 
 // --- EMG SENSOR: Pin & RMS Setup ---
 #define SensorInputPin A5
@@ -62,15 +64,27 @@ unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
 long          emg_windowMax   = 0;
 
-int level = 0;             // EMG output: 0 (no contraction) to 3 (high contraction)
-
 // --- MATH MODEL: Counter & CTS Risk ---
-//   ctsCounter       — running total of weighted movement score
-//   CTS_THRESHOLD    — score at which CTS risk flag is set
-//   ctsRisk          — set to true when counter exceeds threshold
-long          ctsCounter   = 0;
-const long    CTS_THRESHOLD = 2000;
-bool          ctsRisk       = false;
+//   ctsCounter             — running total of weighted movement score
+//   CTS_THRESHOLD          — score at which CTS risk flag is set
+//   ctsRisk                — set to true when counter exceeds threshold
+//   emg_history[]          — stores last 3 EMG level readings
+//   flex_history[]         — stores last 3 flex returnValue readings
+//   historyIndex           — tracks position in the 3-reading rolling window
+//   historyFull            — true once at least 3 readings have been collected
+//   SPIKE_FILTER_THRESHOLD — minimum sum of 3 readings required to add to counter
+//                            (sum of 3 must be >= 4 to rule out single spikes;
+//                             e.g. 1 high + 2 none = sum of 3, rejected;
+//                                  2 low  + 1 med  = sum of 4, accepted)
+long          ctsCounter             = 0;
+const long    CTS_THRESHOLD          = 500;
+bool          ctsRisk                = false;
+
+int           emg_history[3]         = {0, 0, 0};
+int           flex_history[3]        = {0, 0, 0};
+int           historyIndex           = 0;
+bool          historyFull            = false;
+const int     SPIKE_FILTER_THRESHOLD = 4;
 
 
 // ============================================================
@@ -230,28 +244,58 @@ void loop() {
     //  SECTION 3: MATH MODEL
     // ============================================================
 
-    // --- Counter System ---
-    // Each loop, the combined sensor values are added to ctsCounter.
-    // returnValue (flex) and level (EMG) are each 0-3.
-    // They are added together (max 6 per loop) to increment the counter.
-    // A higher combined value means more forceful/extreme wrist movement,
-    // which contributes more to cumulative strain.
-    // Once ctsCounter reaches CTS_THRESHOLD, ctsRisk is flagged true.
+    // --- Spike Filter & Counter System ---
+    // Each loop, the current EMG level and flex returnValue are stored
+    // into their respective 3-reading history arrays.
+    // Once 3 readings have been collected, the sum of each sensor's
+    // history is checked against SPIKE_FILTER_THRESHOLD.
+    // Both sensors must independently pass the threshold for their
+    // values to be counted — this prevents a single accidental spike
+    // (e.g. one High + two No Contractions = sum of 3) from inflating
+    // the counter, while consistent readings (e.g. two Low + one Medium
+    // = sum of 4) are accepted and added.
+    // The history window is rolling — each new reading replaces the oldest.
 
-    int combinedScore = returnValue + level;
-    ctsCounter += combinedScore;
+    // Store current readings into rolling history
+    emg_history[historyIndex]  = level;
+    flex_history[historyIndex] = returnValue;
+    historyIndex = (historyIndex + 1) % 3;
+    if (historyIndex == 0) historyFull = true;
+
+    int combinedScore = 0;
+    bool emg_passed   = false;
+    bool flex_passed  = false;
+
+    if (historyFull) {
+        // Sum the last 3 readings for each sensor
+        int emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
+        int flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
+
+        // Only count if each sensor's 3-reading sum meets the threshold
+        if (emg_sum >= SPIKE_FILTER_THRESHOLD) {
+            combinedScore += emg_sum;
+            emg_passed = true;
+        }
+        if (flex_sum >= SPIKE_FILTER_THRESHOLD) {
+            combinedScore += flex_sum;
+            flex_passed = true;
+        }
+
+        ctsCounter += combinedScore;
+    }
 
     if (ctsCounter >= CTS_THRESHOLD) {
         ctsRisk = true;
     }
 
     Serial.println("=======MATH MODEL=======");
-    Serial.print("Combined Score: ");
-    Serial.print(combinedScore);
-    Serial.print("  |  Counter: ");
-    Serial.print(ctsCounter);
-    Serial.print("  |  CTS Risk: ");
-    Serial.println(ctsRisk ? "TRUE" : "false");
+    Serial.print("EMG  last 3 sum: "); Serial.print(emg_history[0] + emg_history[1] + emg_history[2]);
+    Serial.print("  passed: ");        Serial.println(emg_passed  ? "YES" : "NO");
+    Serial.print("Flex last 3 sum: "); Serial.print(flex_history[0] + flex_history[1] + flex_history[2]);
+    Serial.print("  passed: ");        Serial.println(flex_passed ? "YES" : "NO");
+    Serial.print("Combined Score: ");  Serial.print(combinedScore);
+    Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
+    Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
     Serial.println();
 
     delay(1000);
