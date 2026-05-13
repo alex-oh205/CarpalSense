@@ -60,6 +60,8 @@ int flex_rawBackward = 40;  // Raw when fully bent backward
 
 const int flex_DEADZONE = 2;
 int returnValue = 0;        // Flex sensor output: 0 (flat) to 3 (full bend)
+int level = 0;             // EMG output: 0 (no contraction) to 3 (high contraction)
+
 
 // --- EMG SENSOR: Pin & RMS Setup ---
 #define SensorInputPin A5
@@ -94,15 +96,27 @@ unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
 long          emg_windowMax   = 0;
 
-int level = 0;             // EMG output: 0 (no contraction) to 3 (high contraction)
-
 // --- MATH MODEL: Counter & CTS Risk ---
-//   ctsCounter       — running total of weighted movement score
-//   CTS_THRESHOLD    — score at which CTS risk flag is set
-//   ctsRisk          — set to true when counter exceeds threshold
-long          ctsCounter   = 0;
-const long    CTS_THRESHOLD = 2000;
-bool          ctsRisk       = false;
+//   ctsCounter             — running total of weighted movement score
+//   CTS_THRESHOLD          — score at which CTS risk flag is set
+//   ctsRisk                — set to true when counter exceeds threshold
+//   emg_history[]          — stores last 3 EMG level readings
+//   flex_history[]         — stores last 3 flex returnValue readings
+//   historyIndex           — tracks position in the 3-reading rolling window
+//   historyFull            — true once at least 3 readings have been collected
+//   SPIKE_FILTER_THRESHOLD — minimum sum of 3 readings required to add to counter
+//                            (sum of 3 must be >= 4 to rule out single spikes;
+//                             e.g. 1 high + 2 none = sum of 3, rejected;
+//                                  2 low  + 1 med  = sum of 4, accepted)
+long          ctsCounter             = 0;
+const long    CTS_THRESHOLD          = 500;
+bool          ctsRisk                = false;
+
+int           emg_history[3]         = {0, 0, 0};
+int           flex_history[3]        = {0, 0, 0};
+int           historyIndex           = 0;
+bool          historyFull            = false;
+const int     SPIKE_FILTER_THRESHOLD = 4;
 
 // ==========END OF SENSOR LIBRARIES AND VARIABLES===================
 
@@ -196,132 +210,167 @@ void loop(){
 //===========START OF BME CODE + MODEL============
 
   // ── EMG SENSOR: Data Collection ──
-  emg_timeStamp = micros();
+    emg_timeStamp = micros();
 
-  analogRead(SensorInputPin);
-  int emg_Value    = analogRead(SensorInputPin);
-  int centered     = emg_Value - 3700;
-  int filtered     = myFilter.update(centered);
-  long envelope    = (long)filtered * filtered;
-  long smoothed    = computeRMS(envelope);
+    analogRead(SensorInputPin);
+    int emg_Value    = analogRead(SensorInputPin);
+    int centered     = emg_Value - 3700;
+    int filtered     = myFilter.update(centered);
+    long envelope    = (long)filtered * filtered;
+    long smoothed    = computeRMS(envelope);
 
-  if (smoothed < emg_windowMin) emg_windowMin = smoothed;
-  if (smoothed > emg_windowMax) emg_windowMax = smoothed;
+    if (smoothed < emg_windowMin) emg_windowMin = smoothed;
+    if (smoothed > emg_windowMax) emg_windowMax = smoothed;
 
-  unsigned long now = millis();
-  if (now - emg_windowStart >= emg_WINDOW_MS) {
+    unsigned long now = millis();
+    if (now - emg_windowStart >= emg_WINDOW_MS) {
 
-      float pct = 0.0f;
+        float pct = 0.0f;
 
-      if (emg_windowMin > 0) {
-          pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
+        if (emg_windowMin > 0) {
+            pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
 
-          if      (pct >= emg_THRESH_HIGH_PCT) level = 3;
-          else if (pct >= emg_THRESH_MED_PCT)  level = 2;
-          else if (pct >= emg_THRESH_LOW_PCT)  level = 1;
-          else                                 level = 0;
-      }
+            if      (pct >= emg_THRESH_HIGH_PCT) level = 3;
+            else if (pct >= emg_THRESH_MED_PCT)  level = 2;
+            else if (pct >= emg_THRESH_LOW_PCT)  level = 1;
+            else                                 level = 0;
+        }
 
-      Serial.println("=======EMG SENSOR=======");
-      Serial.print("min: ");
-      Serial.print(emg_windowMin);
-      Serial.print("  max: ");
-      Serial.print(emg_windowMax);
-      Serial.print("  spread: ");
-      Serial.print(pct, 1);
-      Serial.print("%  ->  ");
-      Serial.println(levelLabel(level));
+        Serial.println("=======EMG SENSOR=======");
+        Serial.print("min: ");
+        Serial.print(emg_windowMin);
+        Serial.print("  max: ");
+        Serial.print(emg_windowMax);
+        Serial.print("  spread: ");
+        Serial.print(pct, 1);
+        Serial.print("%  ->  ");
+        Serial.println(levelLabel(level));
 
-      emg_windowMin   = LONG_MAX;
-      emg_windowMax   = 0;
-      emg_windowStart = now;
-  }
+        emg_windowMin   = LONG_MAX;
+        emg_windowMax   = 0;
+        emg_windowStart = now;
+    }
 
-  // ── FLEX SENSOR: Data Collection ──
-  int flex_raw = analogRead(FLEX_PIN);
+    // ── FLEX SENSOR: Data Collection ──
+    int flex_raw = analogRead(FLEX_PIN);
 
-  float flex_voltage    = flex_raw * (FLEX_VCC / 1023.0);
-  float flex_resistance = 0;
-  if (flex_voltage > 0) {
-      flex_resistance = FLEX_R_DIV * (FLEX_VCC / flex_voltage - 1.0);
-  }
+    float flex_voltage    = flex_raw * (FLEX_VCC / 1023.0);
+    float flex_resistance = 0;
+    if (flex_voltage > 0) {
+        flex_resistance = FLEX_R_DIV * (FLEX_VCC / flex_voltage - 1.0);
+    }
 
-  // Compute signed position (-100 to +100)
-  //   positive = forward bend
-  //   negative = backward bend
-  //   0        = flat
-  int flex_position = 0;
-  if (flex_raw < flex_rawFlat - flex_DEADZONE) {
-      flex_position = constrain(
-          (int)((flex_rawFlat - flex_raw) / (float)(flex_rawFlat - flex_rawForward) * 100.0),
-          0, 100
-      );
-  } else if (flex_raw > flex_rawFlat + flex_DEADZONE) {
-      flex_position = constrain(
-          (int)((flex_raw - flex_rawFlat) / (float)(flex_rawBackward - flex_rawFlat) * 100.0),
-          0, 100
-      ) * -1;
-  }
+    // Compute signed position (-100 to +100)
+    //   positive = forward bend
+    //   negative = backward bend
+    //   0        = flat
+    int flex_position = 0;
+    if (flex_raw < flex_rawFlat - flex_DEADZONE) {
+        flex_position = constrain(
+            (int)((flex_rawFlat - flex_raw) / (float)(flex_rawFlat - flex_rawForward) * 100.0),
+            0, 100
+        );
+    } else if (flex_raw > flex_rawFlat + flex_DEADZONE) {
+        flex_position = constrain(
+            (int)((flex_raw - flex_rawFlat) / (float)(flex_rawBackward - flex_rawFlat) * 100.0),
+            0, 100
+        ) * -1;
+    }
 
-  const char* flex_direction;
-  const char* flex_zone;
+    const char* flex_direction;
+    const char* flex_zone;
 
-  if (flex_position > flex_DEADZONE) {
-      flex_direction = "FORWARD";
-      if      (flex_position < 40) { flex_zone = "Slight";   returnValue = 1; }
-      else if (flex_position < 75) { flex_zone = "Moderate"; returnValue = 2; }
-      else                         { flex_zone = "Full";      returnValue = 3; }
-  } else if (flex_position < -flex_DEADZONE) {
-      flex_direction = "BACKWARD";
-      if      (flex_position > -30) { flex_zone = "Slight";   returnValue = 1; }
-      else if (flex_position > -55) { flex_zone = "Moderate"; returnValue = 2; }
-      else                          { flex_zone = "Full";      returnValue = 3; }
-  } else {
-      flex_direction = "FLAT";
-      flex_zone      = "";
-      returnValue    = 0;
-  }
+    if (flex_position > flex_DEADZONE) {
+        flex_direction = "FORWARD";
+        if      (flex_position < 40) { flex_zone = "Slight";   returnValue = 1; }
+        else if (flex_position < 75) { flex_zone = "Moderate"; returnValue = 2; }
+        else                         { flex_zone = "Full";      returnValue = 3; }
+    } else if (flex_position < -flex_DEADZONE) {
+        flex_direction = "BACKWARD";
+        if      (flex_position > -30) { flex_zone = "Slight";   returnValue = 1; }
+        else if (flex_position > -55) { flex_zone = "Moderate"; returnValue = 2; }
+        else                          { flex_zone = "Full";      returnValue = 3; }
+    } else {
+        flex_direction = "FLAT";
+        flex_zone      = "";
+        returnValue    = 0;
+    }
 
-  Serial.println("=======FLEX SENSOR=======");
-  Serial.print(flex_raw);
-  Serial.print(" | ");
-  Serial.print(flex_voltage, 2);
-  Serial.print("V | ");
-  Serial.print(flex_resistance / 1000.0, 1);
-  Serial.print("KΩ | ");
-  Serial.print(flex_position);
-  Serial.print(" | ");
-  Serial.print(flex_direction);
-  Serial.print(" ");
-  Serial.print(flex_zone);
-  Serial.print(" | ");
-  Serial.println(returnValue);
+    Serial.println("=======FLEX SENSOR=======");
+    Serial.print(flex_raw);
+    Serial.print(" | ");
+    Serial.print(flex_voltage, 2);
+    Serial.print("V | ");
+    Serial.print(flex_resistance / 1000.0, 1);
+    Serial.print("KΩ | ");
+    Serial.print(flex_position);
+    Serial.print(" | ");
+    Serial.print(flex_direction);
+    Serial.print(" ");
+    Serial.print(flex_zone);
+    Serial.print(" | ");
+    Serial.println(returnValue);
 
-  // --- Counter System ---
-  // Each loop, the combined sensor values are added to ctsCounter.
-  // returnValue (flex) and level (EMG) are each 0-3.
-  // They are added together (max 6 per loop) to increment the counter.
-  // A higher combined value means more forceful/extreme wrist movement,
-  // which contributes more to cumulative strain.
-  // Once ctsCounter reaches CTS_THRESHOLD, ctsRisk is flagged true.
 
-  int combinedScore = returnValue + level;
-  ctsCounter += combinedScore;
+    // ============================================================
+    //  SECTION 3: MATH MODEL
+    // ============================================================
 
-  if (ctsCounter >= CTS_THRESHOLD) {
-      ctsRisk = true;
-  }
+    // --- Spike Filter & Counter System ---
+    // Each loop, the current EMG level and flex returnValue are stored
+    // into their respective 3-reading history arrays.
+    // Once 3 readings have been collected, the sum of each sensor's
+    // history is checked against SPIKE_FILTER_THRESHOLD.
+    // Both sensors must independently pass the threshold for their
+    // values to be counted — this prevents a single accidental spike
+    // (e.g. one High + two No Contractions = sum of 3) from inflating
+    // the counter, while consistent readings (e.g. two Low + one Medium
+    // = sum of 4) are accepted and added.
+    // The history window is rolling — each new reading replaces the oldest.
 
-  Serial.println("=======MATH MODEL=======");
-  Serial.print("Combined Score: ");
-  Serial.print(combinedScore);
-  Serial.print("  |  Counter: ");
-  Serial.print(ctsCounter);
-  Serial.print("  |  CTS Risk: ");
-  Serial.println(ctsRisk ? "TRUE" : "false");
-  Serial.println();
+    // Store current readings into rolling history
+    emg_history[historyIndex]  = level;
+    flex_history[historyIndex] = returnValue;
+    historyIndex = (historyIndex + 1) % 3;
+    if (historyIndex == 0) historyFull = true;
 
-  delay(1000);
+    int combinedScore = 0;
+    bool emg_passed   = false;
+    bool flex_passed  = false;
+
+    if (historyFull) {
+        // Sum the last 3 readings for each sensor
+        int emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
+        int flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
+
+        // Only count if each sensor's 3-reading sum meets the threshold
+        if (emg_sum >= SPIKE_FILTER_THRESHOLD) {
+            combinedScore += emg_sum;
+            emg_passed = true;
+        }
+        if (flex_sum >= SPIKE_FILTER_THRESHOLD) {
+            combinedScore += flex_sum;
+            flex_passed = true;
+        }
+
+        ctsCounter += combinedScore;
+    }
+
+    if (ctsCounter >= CTS_THRESHOLD) {
+        ctsRisk = true;
+    }
+
+    Serial.println("=======MATH MODEL=======");
+    Serial.print("EMG  last 3 sum: "); Serial.print(emg_history[0] + emg_history[1] + emg_history[2]);
+    Serial.print("  passed: ");        Serial.println(emg_passed  ? "YES" : "NO");
+    Serial.print("Flex last 3 sum: "); Serial.print(flex_history[0] + flex_history[1] + flex_history[2]);
+    Serial.print("  passed: ");        Serial.println(flex_passed ? "YES" : "NO");
+    Serial.print("Combined Score: ");  Serial.print(combinedScore);
+    Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
+    Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
+    Serial.println();
+
+    delay(1000);
 //====================END OF BME CODE + MODEL===============
 
   StaticJsonDocument<200> doc;
