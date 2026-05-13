@@ -10,28 +10,40 @@
     <h1 class="text-center heading"><strong>The Problem</strong></h1>
 
     <!--Image-->
-    <img src="{{url_for('static', filename = 'img/carpal_tunnel.jpg')}}" alt="Problem Image" class="d-block mx-auto mt-5 rounded-4 border border-3">
+    <img src="{{url_for('static', filename = 'img/carpal_tunnel.jpg')}}" alt="Problem Image" class="d-block mx-auto mt-5 rounded-4 border border-3" style="width:60vw">
     <br>
 
     <!--Text-->
-    <div class="w-75 mx-auto">
-        <h5 class="mt-5"><strong>What is Carpal Tunnel Sydrome?</strong></h5>
-        <p class class="mt-3">Carpal tunnel sydrome is one of the most common hand conditions in the world.
-                              When pressure is applied on the median nerve in the carpal tunnel of the wrist, the condition starts to develop.
-                              The carpal tunnel is located on the palm side of the hand, and it is a narrow passageway that is surrounded by bones and ligaments.
-                              When the median nerve is compressed, the carpal tunnel experiences more pressure and narrowing, while leads to the development of carpal tunnel syndrome.
-        </p>
-        <h5 class="mt-5"><strong>What Symptoms are Associated With the Condition?</strong></h5>
-        <p class class="mt-3">The three main symptoms associated with carpal tunnel syndrome are tingling, numbness, and weakness.
-                              Tingling and numbness are the first symptoms that arrive, and the thumb, middle, and ring fingers are usually affected.
-                              It is also possible that you might feel an electric shock in these fingers, and the sensation can also travel up the wrist into the arm.
-                              Weakness comes next, and it can cause you to drop objects and struggle to grip objects frequently.
-        </p>
+    <div class="d-flex flex-row mx-auto mt-5 g-5" style="width:80%">
+        <div style="width:50%;" class="align-items-center">
+            <br><br><br>
+            <h4 class=""><strong>What is Carpal Tunnel Sydrome?</strong></h4>
+            <p class class="mt-3">Carpal tunnel sydrome is one of the most common hand conditions in the world.
+                                When pressure is applied on the median nerve in the carpal tunnel of the wrist, the condition starts to develop.
+                                The carpal tunnel is located on the palm side of the hand, and it is a narrow passageway that is surrounded by bones and ligaments.
+                                When the median nerve is compressed, the carpal tunnel experiences more pressure and narrowing, while leads to the development of carpal tunnel syndrome.
+            </p>
+            <h4 class="mt-5"><strong>What Symptoms are Associated With the Condition?</strong></h4>
+        <p class class="mt-3">There are many symptoms associated with carpal tunnel, but there are three main symptoms that are associated with carpal tunnel syndrome. 
+                            These symptoms all occur around the wrist area, and they are:</p>
+            <ul>
+                <li>Tingling</li>
+                <li>Numbness</li>
+                <li>Weakness</li>
+            </ul>
+            <p class class="mt-3">Tingling and numbness are the first symptoms that arrive, and the thumb, middle, and ring fingers are usually affected.
+                                It is also possible that you might feel an electric shock in these fingers, and the sensation can also travel up the wrist into the arm.
+                                Weakness comes next, and it can cause you to drop objects and struggle to grip objects frequently.
+            </p>
+        </div>
+        <div style="width:50%;" class="ps-5">
+            <img src="{{url_for('static', filename = 'img/median_nerve_compress.jpg')}}" alt="Median Nerve Compression Image" class="d-block mx-auto mt-5 rounded-4 border border-3" style="width:100%">
+        </div>
     </div>
+    
 
     <!--Quote-->
     <div class="w-50 align-items-center justify-content-center mx-auto">
-        <br>
         <br>
         <h1 class="mt-5">"My constant wrist injuries caused me to get fired, but CarpalSense has come to my rescue!"</h1>
         <div class="mx-auto d-flex mt-3">
@@ -44,9 +56,6 @@
     </div>
 
     <br>
-    <br>
-    <br>
-    <br>
 
     <!--Text 2-->
     <div class="w-75 mx-auto">
@@ -57,7 +66,4 @@
                               CarpalSense can help solve this problem by providing real-time information to users, letting them know when they are at risk of developing carpal tunnel syndrome.
         </p>
     </div>
-
-    <br>
-    <br>
 {% endblock main %}

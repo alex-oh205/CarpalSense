@@ -13,16 +13,20 @@
     <br>
 
     <!--Materials-->
-    <div class="w-75 d-flex flex-row mx-auto">
-        <div class="text-left mx-auto">
-            <h5><strong>Materials</strong></h5>
+    <div class="d-flex flex-row mx-auto g-5" style="width:80%">
+        <div style="width:50%;" class="align-items-center">
+            <h4><strong>Materials</strong></h4>
             <p class="mt-3">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos. Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
         </div>
+        <div style="width:50%;" class="ps-5">
+            <img src="{{url_for('static', filename = 'img/median_nerve_compress.jpg')}}" alt="Median Nerve Compression Image" class="d-block mx-auto mt-5 rounded-4 border border-3" style="width:100%">
+        </div>
     </div>
-    
+
+    <br><br>
 
     <!--Material list-->
-    <div class="w-75 mx-auto mt-4">
+    <div class="w-75 mx-auto mt-5">
 
         <!--Materials table-->
         <table class="table table-striped table-bordered my-table">
@@ -98,8 +102,8 @@
         <div class="d-flex mt-5">
             <!-- Left column: text -->
             <div class="p-2" style="flex: 1 1 0; min-width: 0">
-                <h3>Our Work</h3>
-                <p class="mt-4">
+                <h4><strong>Our Work</strong></h4>
+                <p class="mt-2">
                     The CO₂ Sleeve is a compact device designed to help everyday people reduce carbon
                     dioxide emissions in a simple and safe way, without affecting engine performance or other
                     equipment. It consists of a hollow sleeve with a carefully designed internal structure,
@@ -110,8 +114,8 @@
                     allowing users to reduce emissions in small, practical ways. The sleeve is modular and easy to
                     install, and its design is focused on functionality, efficiency, and usability.
                 </p>
-                <h3 class="mt-4">Software and Methods</h3>
-                <p class="mt-4">
+                <h4 class="mt-4"><strong>Software & Methods</strong></h4>
+                <p class="mt-2">
                     We used Autodesk Fusion 360 to design the sleeve and honeycomb structure. The STL model below
                     represents the prototype. By combining CAD design with our amine-based sorbent, we created a modular
                     system that’s easy for everyday users to implement, demonstrating a simple but effective method
@@ -139,7 +143,6 @@
             <source src="{{ url_for('static', filename='/static/videos/demo.mp4') }}" type="video/mp4">
             Your browser does not support the video tag.
         </video>
-        <br><br>
     </div>
 
 {% endblock main %}
