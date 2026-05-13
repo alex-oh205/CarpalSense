@@ -9,7 +9,7 @@ const float R_DIV    = 47000.0;
 //   1. Hold sensor completely flat  → note raw, set rawFlat
 //   2. Bend fully FORWARD (normal)  → note raw, set rawForward
 //   3. Bend fully BACKWARD          → note raw, set rawBackward
-int rawFlat     = 22;0  // Resting flat value
+int rawFlat     = 22;  // Resting flat value
 int rawForward  = 7;  // Raw when fully bent forward 
 int rawBackward = 40;  // Raw when fully bent backward
 
