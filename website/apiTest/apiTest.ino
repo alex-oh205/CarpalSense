@@ -54,9 +54,9 @@ const float FLEX_R_DIV = 47000.0;
 //   1. Hold sensor completely flat  → note raw, set flex_rawFlat
 //   2. Bend fully FORWARD (normal)  → note raw, set flex_rawForward
 //   3. Bend fully BACKWARD          → note raw, set flex_rawBackward
-int flex_rawFlat     = 22;  // Resting flat value
-int flex_rawForward  = 7;   // Raw when fully bent forward
-int flex_rawBackward = 40;  // Raw when fully bent backward
+int flex_rawFlat     = 550;  // Resting flat value
+int flex_rawForward  = 420;   // Raw when fully bent forward
+int flex_rawBackward = 610;  // Raw when fully bent backward
 
 const int flex_DEADZONE = 2;
 int returnValue = 0;        // Flex sensor output: 0 (flat) to 3 (full bend)
@@ -89,9 +89,9 @@ const unsigned long emg_timeBudget = 2000;
 //   THRESH_HIGH_PCT — % spread to count as High   contraction
 // Percent spread = ((max - min) / min) * 100
 const unsigned long emg_WINDOW_MS       = 1000;
-const float         emg_THRESH_LOW_PCT  = 500.0f;
-const float         emg_THRESH_MED_PCT  = 3000.0f;
-const float         emg_THRESH_HIGH_PCT = 6000.0f;
+const float         emg_THRESH_LOW_PCT  = 50.0f;
+const float         emg_THRESH_MED_PCT  = 100.0f;
+const float         emg_THRESH_HIGH_PCT = 200.0f;
 
 unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
