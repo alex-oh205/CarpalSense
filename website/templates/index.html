@@ -7,7 +7,7 @@
 {% block main %}
     <!-- Banner -->
     <section class="banner text-center text-light">
-        <div class="container">
+        <div class="container-fluid">
             <h1 class="display-5 fw-bold">CarpalSense</h1>
             <p class="fs-4">The future of carpal tunnel prevention and hand health.</p>
             <div class="d-flex gap-3 justify-content-center mb-5">
@@ -18,14 +18,17 @@
                 {% endif %}
                 <a href="{{ url_for('design') }}" class="btn btn-outline-light outline-light-hover">Learn More</a>
             </div>
-            <div class="card rounded-5 p-3 w-75 mx-auto banner-card">
-                <div class="card-body">
-                    <video class="rounded-4" width="100%" style="aspect-ratio: 16 / 9;" controls>
-                        <source src="{{ url_for('static', filename='/static/videos/demo.mp4') }}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
+            <div class="row">
+                <div class="card rounded-5 p-2 col-12 col-lg-9 col-xxl-6 mx-auto banner-card">
+                    <div class="card-body">
+                        <video class="rounded-4" width="100%" style="aspect-ratio: 16 / 9;" controls>
+                            <source src="{{ url_for('static', filename='/static/videos/demo.mp4') }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
                 </div>
             </div>
+            
         </div>
     </section>
     

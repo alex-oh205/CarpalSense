@@ -41,7 +41,7 @@
     background: linear-gradient(135deg, var(--bg) 0%, rgb(55, 0, 110) 100%);
     background-size: cover;
     background-position: center;
-    padding: 164px 50px 50px;
+    padding: 164px 50px 75px;
 }
 
 .banner h1 {                                /* banner title animation */
@@ -63,6 +63,7 @@
     background: linear-gradient(135deg, hsl(from var(--bg) h 40% 50%) 0%, hsl(from rgb(55, 0, 110) h 40% 50%) 100%);
     background-size: cover;
     background-position: center;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
     transform: translateY(4%);
     opacity: 0;
     animation: slideIn 4s cubic-bezier(0.215, 0.61, 0.355, 1) 0.2s forwards;
