@@ -54,6 +54,7 @@ const float FLEX_R_DIV = 47000.0;
 //   1. Hold sensor completely flat  → note raw, set flex_rawFlat
 //   2. Bend fully FORWARD (normal)  → note raw, set flex_rawForward
 //   3. Bend fully BACKWARD          → note raw, set flex_rawBackward
+int flex_position = 0;
 int flex_rawFlat     = 22;  // Resting flat value
 int flex_rawForward  = 7;   // Raw when fully bent forward
 int flex_rawBackward = 40;  // Raw when fully bent backward
@@ -67,6 +68,7 @@ int level = 0;             // EMG output: 0 (no contraction) to 3 (high contract
 #define SensorInputPin A5
 #define RMS_WINDOW 100
 
+float pct = 0.0f;
 long emg_rmsBuffer[RMS_WINDOW] = {0};
 int  emg_rmsIndex = 0;
 long emg_rmsSum   = 0;
@@ -228,7 +230,6 @@ void loop() {
         flex_resistance = FLEX_R_DIV * (FLEX_VCC / flex_voltage - 1.0);
     }
 
-    int flex_position = 0;
     if (flex_raw < flex_rawFlat - flex_DEADZONE) {
         flex_position = constrain(
             (int)((flex_rawFlat - flex_raw) / (float)(flex_rawFlat - flex_rawForward) * 100.0),
@@ -325,7 +326,6 @@ void loop() {
         emg_windowMax   = 0;
         emg_windowStart = now;
     }
-}
 //====================END OF BME CODE + MODEL===============
 
   StaticJsonDocument<200> doc;
@@ -354,10 +354,6 @@ void httpRequest() {
   // close any connection before send a new request to free the socket
   client.stop();
 
-  // call flex() function to get flex sensor value
-  flex();  
-  // call myoware() 
-  myoware();
   // if there's a successful connection:
   if (client.connect(server, 5000)) {
     Serial.println("connecting...");
@@ -366,7 +362,7 @@ void httpRequest() {
     // The Flask route to call should be inbetween the "/" and "?" (ex:  GET /test?...
     // where "test" is the Flask route that will GET the data, "distance" is the key
     // and the value is provided by:  String(distance))
-    String request = "GET /data?bend=" + String(bend) + "&emg=" + String(smoothed) + " HTTP/1.1";
+    String request = "GET /data?bend=" + String(flex_position) + "&emg=" + String(pct) + " HTTP/1.1";
     client.println(request);
 
     // set the host as server IP address
