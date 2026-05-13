@@ -2,6 +2,14 @@
     overflow: hidden;
 }
 
+.w-40 {
+    width: 40%;
+}
+
+.w-875 {
+    width: 87.5%;
+}
+
 .about img {                                /* create animation for making the face zoom in */
     transform-origin: 50% 20%;
     transition: transform 2s ease-out;
