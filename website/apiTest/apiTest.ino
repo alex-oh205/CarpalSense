@@ -67,6 +67,7 @@ int level = 0;             // EMG output: 0 (no contraction) to 3 (high contract
 #define SensorInputPin A5
 #define RMS_WINDOW 100
 
+float pct = 0.0f;
 long emg_rmsBuffer[RMS_WINDOW] = {0};
 int  emg_rmsIndex = 0;
 long emg_rmsSum   = 0;
@@ -264,7 +265,6 @@ void loop() {
     unsigned long now = millis();
     if (now - emg_windowStart >= emg_WINDOW_MS) {
 
-        float pct = 0.0f;
         if (emg_windowMin > 0) {
             pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
 
