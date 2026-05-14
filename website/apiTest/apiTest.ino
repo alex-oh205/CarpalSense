@@ -212,17 +212,20 @@ void setup(){
 void loop() {
 
     // ── EMG: Sample every iteration (needed for 500Hz filter) ──
-    emg_timeStamp = micros();
+    int i = 0;
+    while (i <= 50) {
+      emg_timeStamp = micros();
 
-    analogRead(SensorInputPin);
-    int emg_Value = analogRead(SensorInputPin);
-    int centered  = emg_Value - 3700;
-    int filtered  = myFilter.update(centered);
-    long envelope = (long)filtered * filtered;
-    long smoothed = computeRMS(envelope);
+      analogRead(SensorInputPin);
+      int emg_Value = analogRead(SensorInputPin);
+      int centered  = emg_Value - 3700;
+      int filtered  = myFilter.update(centered);
+      long envelope = (long)filtered * filtered;
+      long smoothed = computeRMS(envelope);
 
-    if (smoothed < emg_windowMin) emg_windowMin = smoothed;
-    if (smoothed > emg_windowMax) emg_windowMax = smoothed;
+      if (smoothed < emg_windowMin) emg_windowMin = smoothed;
+      if (smoothed > emg_windowMax) emg_windowMax = smoothed;
+    }
 
     // ── FLEX: Read every iteration (lightweight, no print yet) ──
     flex_position = 0;
@@ -293,7 +296,6 @@ void loop() {
         Serial.print(" ");            Serial.print(flex_zone);
         Serial.print(" | ");          Serial.println(returnValue);
 
-        // Math model (now correctly runs once per window)
         emg_history[historyIndex]  = level;
         flex_history[historyIndex] = returnValue;
         historyIndex = (historyIndex + 1) % 3;
