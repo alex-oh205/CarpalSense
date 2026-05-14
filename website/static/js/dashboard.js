@@ -142,6 +142,10 @@ async function createSession(userID) {
       exposurePercent: 0,
       breakRecommendation: 'Waiting for first sensor values',
       alerts: []
+    },
+    data: {
+      flexCounter: 0,
+      emgCounter: 0
     }
   };
   try {
@@ -250,69 +254,73 @@ async function calculateRiskAndSummary() {
     return summary;
   }
 
-  const latestFlex = flexData[flexData.length - 1]?.y;
-  const latestEmg = emgData[emgData.length - 1]?.y;
-  const latestImu = imuData[imuData.length - 1]?.y;
+  // const latestFlex = flexData[flexData.length - 1]?.y;
+  // const latestEmg = emgData[emgData.length - 1]?.y;
+  // const latestImu = imuData[imuData.length - 1]?.y;
+  const flexCounter = 0;
+  const snapshot = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/flexCounter`));
+  if (snapshot.exists()) {
+    flexCounter = snapshot.val();
+  }
+  const emgCounter = 0;
+  const snapshot = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/emgCounter`));
+  if (snapshot.exists()) {
+    emgCounter = snapshot.val();
+  }
   let warningLabel = 'Good';
   let warningClass = 'metric-value-good';
 
-  if (latestFlex) {
-    if (latestFlex > 65) {
-      warningLabel = 'High';
-      warningClass = 'metric-value-critical';
-      summary.alerts.push('Wrist bend is high. Straighten your wrist and take a break.');
-    } else if (latestFlex > 45) {
-      if (warningLabel === 'Good') {
-        warningLabel = 'Caution';
-        warningClass = 'metric-value-warning';
-      }
-      summary.alerts.push('Your wrist is moderately bent. Adjust posture.');
+  if (flexCounter > 250) {
+    warningLabel = 'High';
+    warningClass = 'metric-value-critical';
+    summary.alerts.push('Straighten your wrist and take a break.');
+  } else if (flexCounter > 125) {
+    if (warningLabel === 'Good') {
+      warningLabel = 'Caution';
+      warningClass = 'metric-value-warning';
     }
+    summary.alerts.push('Adjust posture.');
   }
 
-  if (latestEmg) {
-    if (latestEmg > 1.0) {
-      warningLabel = 'High';
-      warningClass = 'metric-value-critical';
-      summary.alerts.push('Muscle activity is elevated. Relax your grip.');
-    } else if (latestEmg > 0.8) {
-      if (warningLabel === 'Good') {
-        warningLabel = 'Caution';
-        warningClass = 'metric-value-warning';
-      }
-      summary.alerts.push('Muscle activity is above recommended range. Reduce tension.');
+  if (emgCounter > 250) {
+    warningLabel = 'High';
+    warningClass = 'metric-value-critical';
+    summary.alerts.push('Muscle activity is elevated. Relax your wrist and take a break.');
+  } else if (emgCounter > 125) {
+    if (warningLabel === 'Good') {
+      warningLabel = 'Caution';
+      warningClass = 'metric-value-warning';
     }
+    summary.alerts.push('Muscle activity is above recommended range.');
   }
 
-  if (latestImu) {
-    if (Math.abs(latestImu) > 55) {
-      warningLabel = 'High';
-      warningClass = 'metric-value-critical';
-      summary.alerts.push('Wrist angle is extreme. Return to neutral position.');
-    } else if (Math.abs(latestImu) > 35) {
-      if (warningLabel === 'Good') {
-        warningLabel = 'Caution';
-        warningClass = 'metric-value-warning';
-      }
-      summary.alerts.push('Wrist angle is out of neutral range. Correct posture.');
-    }
-  }
+  // if (imuCounter > 250) {
+  //   warningLabel = 'High';
+  //   warningClass = 'metric-value-critical';
+  //   summary.alerts.push('Wrist angle is extreme. Return to neutral position.');
+  // } else if (imuCounter > 125) {
+  //   if (warningLabel === 'Good') {
+  //     warningLabel = 'Caution';
+  //     warningClass = 'metric-value-warning';
+  //   }
+  //   summary.alerts.push('Wrist angle is out of neutral range. Correct posture.');
+  // }
 
   summary.riskLabel = warningLabel;
   summary.riskClass = warningClass;
 
   const highRiskSamplesFlex = flexData.filter(point => {
-    return point.y > 45;
+    return point.y > 75;
   }).map(point => point.x);
   const highRiskSamplesEmg = emgData.filter(point => {
-    return point.y > 0.8;
+    return point.y > 75;
   }).map(point => point.x);
-  const highRiskSamplesImu = imuData.filter(point => {
-    return Math.abs(point.y) > 35;
-  }).map(point => point.x);
+  // const highRiskSamplesImu = imuData.filter(point => {
+  //   return Math.abs(point.y) > 35;
+  // }).map(point => point.x);
 
   // 0.5 second intervals between each data point
-  const highRiskSeconds = [...new Set([...highRiskSamplesFlex, ...highRiskSamplesEmg, ...highRiskSamplesImu])].length * 0.5;
+  const highRiskSeconds = [...new Set([...highRiskSamplesFlex, ...highRiskSamplesEmg])].length * 0.5;
   const totalSeconds = flexData.length > 0 ? flexData[flexData.length - 1].x : 0;
 
   summary.highRiskMinutes = Math.round(highRiskSeconds / 6) / 10;
@@ -344,7 +352,7 @@ function buildAlerts(messages) {
   alertList.innerHTML = '';
 
   if (!messages.length) {
-    alertList.innerHTML = '<li class="list-group-item alert-item">No active alerts. Your wrist is in a safe position.</li>';
+    alertList.innerHTML = '<li class="list-group-item alert-item">No active alerts.</li>';
     return;
   }
 

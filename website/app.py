@@ -116,12 +116,16 @@ def data():
         else:
             if collectingData:
                 # Take parameters from Arduino request & assign value to variable "value"
-                bend = request.args.get('bend')
-                emg = request.args.get('emg')
+                flex = request.args.get('flex', type=int)
+                emg = request.args.get('emg', type=float)
+                flexHigh = request.args.get('flexHigh', type=int)
+                emgHigh = request.args.get('emgHigh', type=int)
                 # imu = request.args.get('imu')
 
-                print('Bend: ' + str(bend), flush=True)
+                print('Flex: ' + str(flex), flush=True)
                 print('EMG: ' + str(emg), flush=True)
+                print('Flex High: ' + str(flexHigh), flush=True)
+                print('EMG High: ' + str(emgHigh), flush=True)
                 # print('IMU: ' + imu, flush=True)
 
                 uid = currentUser['uid'] if isinstance(currentUser, dict) else currentUser
@@ -130,9 +134,29 @@ def data():
 
                 # Write Arduino data to Firebase under the currently active session if one is registered
                 if currentSessionId:
-                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({sessionTime: bend}, idToken)
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({sessionTime: flex}, idToken)
                     db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/emg').update({sessionTime: emg}, idToken)
                     # db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/imu').update({sessionTime: imu}, idToken)
+                    if flexHigh > 0:
+                        try:
+                            db.child('users/' + uid + '/sessions/' + currentSessionId + '/data').update({'flexCounter': {'.sv': 'increment', '.value': flexHigh}}, idToken)
+                        except:
+                            pass
+                    else:
+                        try:
+                            db.child('users/' + uid + '/sessions/' + currentSessionId + '/data').update({'flexCounter': {'.sv': 'increment', '.value': -2}}, idToken)
+                        except:
+                            pass
+                    if emgHigh > 0:
+                        try:
+                            db.child('users/' + uid + '/sessions/' + currentSessionId + '/data').update({'emgCounter': {'.sv': 'increment', '.value': emgHigh}}, idToken)
+                        except:
+                            pass
+                    else:
+                        try:
+                            db.child('users/' + uid + '/sessions/' + currentSessionId + '/data').update({'emgCounter': {'.sv': 'increment', '.value': -2}}, idToken)
+                        except:
+                            pass
         
         return 'Success', 200
 

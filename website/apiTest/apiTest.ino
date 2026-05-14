@@ -119,6 +119,8 @@ int           flex_history[3]        = {0, 0, 0};
 int           historyIndex           = 0;
 bool          historyFull            = false;
 const int     SPIKE_FILTER_THRESHOLD = 4;
+int flex_sum = 0;
+int emg_sum = 0;
 
 // ==========END OF SENSOR LIBRARIES AND VARIABLES===================
 
@@ -223,6 +225,7 @@ void loop() {
     if (smoothed > emg_windowMax) emg_windowMax = smoothed;
 
     // ── FLEX: Read every iteration (lightweight, no print yet) ──
+    flex_position = 0;
     int flex_raw = analogRead(FLEX_PIN);
     float flex_voltage    = flex_raw * (FLEX_VCC / 4095.0);  // fixed: 12-bit ADC
     float flex_resistance = 0;
@@ -265,6 +268,7 @@ void loop() {
     unsigned long now = millis();
     if (now - emg_windowStart >= emg_WINDOW_MS) {
 
+        pct = 0.0f;
         if (emg_windowMin > 0) {
             pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
 
@@ -295,16 +299,27 @@ void loop() {
         historyIndex = (historyIndex + 1) % 3;
         if (historyIndex == 0) historyFull = true;
 
-        int combinedScore = 0;
+        emg_sum = 0;
+        flex_sum = 0;
         bool emg_passed   = false;
         bool flex_passed  = false;
 
         if (historyFull) {
-            int emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
-            int flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
+            emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
+            flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
 
-            if (emg_sum  >= SPIKE_FILTER_THRESHOLD) { combinedScore += emg_sum;  emg_passed  = true; }
-            if (flex_sum >= SPIKE_FILTER_THRESHOLD) { combinedScore += flex_sum; flex_passed = true; }
+            if (emg_sum  >= SPIKE_FILTER_THRESHOLD) {
+              combinedScore += emg_sum;
+              emg_passed  = true;
+            } else {
+              emg_sum = 0;
+            }
+            if (flex_sum >= SPIKE_FILTER_THRESHOLD) {
+              combinedScore += flex_sum;
+              flex_passed = true;
+            } else {
+              flex_sum = 0;
+            }
 
             ctsCounter += combinedScore;
         }
@@ -361,7 +376,7 @@ void httpRequest() {
     // The Flask route to call should be inbetween the "/" and "?" (ex:  GET /test?...
     // where "test" is the Flask route that will GET the data, "distance" is the key
     // and the value is provided by:  String(distance))
-    String request = "GET /data?bend=" + String(flex_position) + "&emg=" + String(pct) + " HTTP/1.1";
+    String request = "GET /data?flex=" + String(flex_position) + "&emg=" + String(pct) + "&flexHigh=" + String(flex_sum) + "&emgHigh=" + String(emg_sum) + " HTTP/1.1";
     client.println(request);
 
     // set the host as server IP address
