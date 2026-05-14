@@ -257,15 +257,15 @@ async function calculateRiskAndSummary() {
   // const latestFlex = flexData[flexData.length - 1]?.y;
   // const latestEmg = emgData[emgData.length - 1]?.y;
   // const latestImu = imuData[imuData.length - 1]?.y;
-  const flexCounter = 0;
-  const snapshot = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/flexCounter`));
-  if (snapshot.exists()) {
-    flexCounter = snapshot.val();
+  let flexCounter = 0;
+  const snapshot1 = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/flexCounter`));
+  if (snapshot1.exists()) {
+    flexCounter = snapshot1.val();
   }
-  const emgCounter = 0;
-  const snapshot = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/emgCounter`));
-  if (snapshot.exists()) {
-    emgCounter = snapshot.val();
+  let emgCounter = 0;
+  const snapshot2 = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/emgCounter`));
+  if (snapshot2.exists()) {
+    emgCounter = snapshot2.val();
   }
   let warningLabel = 'Good';
   let warningClass = 'metric-value-good';
@@ -487,7 +487,7 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
       }
     );
   } else if (dataType === "emg") {
-    label = 'Muscle Activity (mV)';
+    label = 'Muscle Activity (%)';
     datasets.push(
       {
         label:    `${label}`,     // Dataset label for legend
@@ -568,7 +568,8 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
             color: 'rgba(255, 255, 255, 0.08)',
             drawBorder: true,
             borderColor: 'rgba(255, 255, 255, 0.15)'
-          }
+          },
+          suggestedMax: 10
         },
         y: {                              // y-axis properties
           title: {

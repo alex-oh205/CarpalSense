@@ -72,7 +72,7 @@ def inject_globals():
 # Route to Pyrebase setup and transfer Arduino data to Firebase
 @app.route('/data', methods=['GET', 'POST'])
 def data():
-    global config, currentUser, db, timeStamp, sessionTime, idToken
+    global config, currentUser, db, timeStamp, sessionTime, idToken, prevSessionTime
 
     # POST request (FB configuration sent from login.js, request.method defaults to GET)
     if request.method == 'POST':
@@ -134,29 +134,23 @@ def data():
 
                 # Write Arduino data to Firebase under the currently active session if one is registered
                 if currentSessionId:
-                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({sessionTime: flex}, idToken)
-                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/emg').update({sessionTime: emg}, idToken)
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({str(int(sessionTime)): flex}, idToken)
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/emg').update({str(int(sessionTime)): emg}, idToken)
                     # db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/imu').update({sessionTime: imu}, idToken)
-                    if flexHigh > 0:
-                        try:
-                            db.child('users/' + uid + '/sessions/' + currentSessionId + '/data').update({'flexCounter': {'.sv': 'increment', '.value': flexHigh}}, idToken)
-                        except:
-                            pass
-                    else:
-                        try:
-                            db.child('users/' + uid + '/sessions/' + currentSessionId + '/data').update({'flexCounter': {'.sv': 'increment', '.value': -2}}, idToken)
-                        except:
-                            pass
-                    if emgHigh > 0:
-                        try:
-                            db.child('users/' + uid + '/sessions/' + currentSessionId + '/data').update({'emgCounter': {'.sv': 'increment', '.value': emgHigh}}, idToken)
-                        except:
-                            pass
-                    else:
-                        try:
-                            db.child('users/' + uid + '/sessions/' + currentSessionId + '/data').update({'emgCounter': {'.sv': 'increment', '.value': -2}}, idToken)
-                        except:
-                            pass
+                    flex_inc = flexHigh if flexHigh > 0 else -2
+                    try:
+                        # TARGET THE NODE DIRECTLY: Use the flex_inc variable here as the increment value
+                        db.child(f"users/{uid}/sessions/{currentSessionId}/data/flexCounter").set({".sv": {"increment": flex_inc}}, idToken)
+                    except Exception as e:
+                        print(f"Flex update blocked by rules (likely dropped below 0): {e}")
+
+                    # 3. Handle emgCounter logic securely
+                    emg_inc = emgHigh if emgHigh > 0 else -2
+                    try:
+                        # TARGET THE NODE DIRECTLY: Use the emg_inc variable here as the increment value
+                        db.child(f"users/{uid}/sessions/{currentSessionId}/data/emgCounter").set({".sv": {"increment": emg_inc}}, idToken)
+                    except Exception as e:
+                        print(f"EMG update blocked by rules (likely dropped below 0): {e}")
         
         return 'Success', 200
 
@@ -201,4 +195,4 @@ def session_data():
 if __name__ == "__main__":
 
     # Run app through port 5000 on local dev
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host="172.20.10.9")
