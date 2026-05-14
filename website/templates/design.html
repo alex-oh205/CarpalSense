@@ -15,11 +15,19 @@
     <!--Materials-->
     <div class="d-flex flex-row mx-auto g-5" style="width:80%">
         <div style="width:50%;" class="align-items-center">
+            <br><br><br><br><br>
             <h4><strong>Materials</strong></h4>
-            <p class="mt-3">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos. Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+            <p class="mt-3">Our sensor used many different parts, and they all work in tandem to deliver accurate readings and provide the user a comfortable experience:</p>
+            <ul>
+                <li>A flew and EMG sensor to collect data</li>
+                <li>An arduino to process and deliver the readings to the database</li>
+                <li>A glove to serve as a comfortable way for the user to use the device</li>
+            </ul>
+            <p>A list of materials is shown below. 
+                It feautures the different parts used, the quantity / cost of each part, and the purpose each part serves.</p>
         </div>
         <div style="width:50%;" class="ps-5">
-            <img src="{{url_for('static', filename = 'img/median_nerve_compress.jpg')}}" alt="Median Nerve Compression Image" class="d-block mx-auto mt-5 rounded-4 border border-3" style="width:100%">
+            <img src="{{url_for('static', filename = 'img/sensor.jpg')}}" alt="Median Nerve Compression Image" class="d-block mx-auto mt-5 rounded-4 border border-3" style="width:100%">
         </div>
     </div>
 
@@ -102,24 +110,14 @@
         <div class="d-flex mt-5">
             <!-- Left column: text -->
             <div class="p-2" style="flex: 1 1 0; min-width: 0">
-                <h4><strong>Our Work</strong></h4>
-                <p class="mt-2">
-                    The CO₂ Sleeve is a compact device designed to help everyday people reduce carbon
-                    dioxide emissions in a simple and safe way, without affecting engine performance or other
-                    equipment. It consists of a hollow sleeve with a carefully designed internal structure,
-                    including a honeycomb-like pattern that maximizes surface area for CO₂ capture. The cylindrical
-                    honeycomb cartridge is easily replaceable when needed. Inside the sleeve, we use an amine-based
-                    sorbent, a chemical material known for its ability to selectively absorb CO₂ from the air. Air
-                    containing carbon dioxide passes through the sleeve, where the sorbent captures and retains the gas,
-                    allowing users to reduce emissions in small, practical ways. The sleeve is modular and easy to
-                    install, and its design is focused on functionality, efficiency, and usability.
-                </p>
                 <h4 class="mt-4"><strong>Software & Methods</strong></h4>
                 <p class="mt-2">
-                    We used Autodesk Fusion 360 to design the sleeve and honeycomb structure. The STL model below
-                    represents the prototype. By combining CAD design with our amine-based sorbent, we created a modular
-                    system that's easy for everyday users to implement, demonstrating a simple but effective method
-                    to reduce CO₂ emissions.
+                    We used Autodesk Fusion 360 to model the sensor alongside all it's associated components. 
+                    The model to the right represents our final sensor. 
+                </p>
+                <h4 class="mt-4"><strong>Mathematical Model</strong></h4>
+                <p class="mt-2">
+                    Additionally, our sensor uses a mathematical model to detect when a user is at risk to develop carpal tunnel syndrome.
                 </p>
             </div>
 
