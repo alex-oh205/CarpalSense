@@ -212,10 +212,8 @@ void setup(){
 void loop() {
 
     // ── EMG: Sample every iteration (needed for 500Hz filter) ──
-    int i = 0;
-    while (i <= 50) {
-      emg_timeStamp = micros();
-
+    emg_timeStamp = micros();
+    while (millis() - emg_windowStart < emg_WINDOW_MS) {
       analogRead(SensorInputPin);
       int emg_Value = analogRead(SensorInputPin);
       int centered  = emg_Value - 3700;
@@ -269,79 +267,77 @@ void loop() {
 
     // ── Once per second: print everything + run math model ──
     unsigned long now = millis();
-    if (now - emg_windowStart >= emg_WINDOW_MS) {
 
-        pct = 0.0f;
-        if (emg_windowMin > 0) {
-            pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
+      pct = 0.0f;
+      if (emg_windowMin > 0) {
+          pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
 
-            if      (pct >= emg_THRESH_HIGH_PCT) level = 3;
-            else if (pct >= emg_THRESH_MED_PCT)  level = 2;
-            else if (pct >= emg_THRESH_LOW_PCT)  level = 1;
-            else                                 level = 0;
-        }
+          if      (pct >= emg_THRESH_HIGH_PCT) level = 3;
+          else if (pct >= emg_THRESH_MED_PCT)  level = 2;
+          else if (pct >= emg_THRESH_LOW_PCT)  level = 1;
+          else                                 level = 0;
+      }
 
-        Serial.println("=======EMG SENSOR=======");
-        Serial.print("min: ");        Serial.print(emg_windowMin);
-        Serial.print("  max: ");      Serial.print(emg_windowMax);
-        Serial.print("  spread: ");   Serial.print(pct, 1);
-        Serial.print("%  ->  ");      Serial.println(levelLabel(level));
+      Serial.println("=======EMG SENSOR=======");
+      Serial.print("min: ");        Serial.print(emg_windowMin);
+      Serial.print("  max: ");      Serial.print(emg_windowMax);
+      Serial.print("  spread: ");   Serial.print(pct, 1);
+      Serial.print("%  ->  ");      Serial.println(levelLabel(level));
 
-        Serial.println("=======FLEX SENSOR=======");
-        Serial.print(flex_raw);
-        Serial.print(" | ");          Serial.print(flex_voltage, 2);
-        Serial.print("V | ");         Serial.print(flex_resistance / 1000.0, 1);
-        Serial.print("KΩ | ");        Serial.print(flex_position);
-        Serial.print(" | ");          Serial.print(flex_direction);
-        Serial.print(" ");            Serial.print(flex_zone);
-        Serial.print(" | ");          Serial.println(returnValue);
+      Serial.println("=======FLEX SENSOR=======");
+      Serial.print(flex_raw);
+      Serial.print(" | ");          Serial.print(flex_voltage, 2);
+      Serial.print("V | ");         Serial.print(flex_resistance / 1000.0, 1);
+      Serial.print("KΩ | ");        Serial.print(flex_position);
+      Serial.print(" | ");          Serial.print(flex_direction);
+      Serial.print(" ");            Serial.print(flex_zone);
+      Serial.print(" | ");          Serial.println(returnValue);
 
-        emg_history[historyIndex]  = level;
-        flex_history[historyIndex] = returnValue;
-        historyIndex = (historyIndex + 1) % 3;
-        if (historyIndex == 0) historyFull = true;
+      emg_history[historyIndex]  = level;
+      flex_history[historyIndex] = returnValue;
+      historyIndex = (historyIndex + 1) % 3;
+      if (historyIndex == 0) historyFull = true;
 
-        emg_sum = 0;
-        flex_sum = 0;
-        bool emg_passed   = false;
-        bool flex_passed  = false;
+      emg_sum = 0;
+      flex_sum = 0;
+      bool emg_passed   = false;
+      bool flex_passed  = false;
 
-        if (historyFull) {
-            emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
-            flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
+      if (historyFull) {
+          emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
+          flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
 
-            if (emg_sum  >= SPIKE_FILTER_THRESHOLD) {
-              combinedScore += emg_sum;
-              emg_passed  = true;
-            } else {
-              emg_sum = 0;
-            }
-            if (flex_sum >= SPIKE_FILTER_THRESHOLD) {
-              combinedScore += flex_sum;
-              flex_passed = true;
-            } else {
-              flex_sum = 0;
-            }
+          if (emg_sum  >= SPIKE_FILTER_THRESHOLD) {
+            combinedScore += emg_sum;
+            emg_passed  = true;
+          } else {
+            emg_sum = 0;
+          }
+          if (flex_sum >= SPIKE_FILTER_THRESHOLD) {
+            combinedScore += flex_sum;
+            flex_passed = true;
+          } else {
+            flex_sum = 0;
+          }
 
-            ctsCounter += combinedScore;
-        }
+          ctsCounter += combinedScore;
+      }
 
-        if (ctsCounter >= CTS_THRESHOLD) ctsRisk = true;
+      if (ctsCounter >= CTS_THRESHOLD) ctsRisk = true;
 
-        Serial.println("=======MATH MODEL=======");
-        Serial.print("EMG  last 3 sum: "); Serial.print(emg_history[0] + emg_history[1] + emg_history[2]);
-        Serial.print("  passed: ");        Serial.println(emg_passed  ? "YES" : "NO");
-        Serial.print("Flex last 3 sum: "); Serial.print(flex_history[0] + flex_history[1] + flex_history[2]);
-        Serial.print("  passed: ");        Serial.println(flex_passed ? "YES" : "NO");
-        Serial.print("Combined Score: ");  Serial.print(combinedScore);
-        Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
-        Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
-        Serial.println();
+      Serial.println("=======MATH MODEL=======");
+      Serial.print("EMG  last 3 sum: "); Serial.print(emg_history[0] + emg_history[1] + emg_history[2]);
+      Serial.print("  passed: ");        Serial.println(emg_passed  ? "YES" : "NO");
+      Serial.print("Flex last 3 sum: "); Serial.print(flex_history[0] + flex_history[1] + flex_history[2]);
+      Serial.print("  passed: ");        Serial.println(flex_passed ? "YES" : "NO");
+      Serial.print("Combined Score: ");  Serial.print(combinedScore);
+      Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
+      Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
+      Serial.println();
 
-        emg_windowMin   = LONG_MAX;
-        emg_windowMax   = 0;
-        emg_windowStart = now;
-    }
+      emg_windowMin   = LONG_MAX;
+      emg_windowMax   = 0;
+      emg_windowStart = millis();
 //====================END OF BME CODE + MODEL===============
 
   StaticJsonDocument<200> doc;
