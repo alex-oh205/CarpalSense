@@ -2,7 +2,7 @@
 # Flask app for Flask + Firebase 
 # Coded By:  Alex Oh
 
-# Flask app to test sending user's Firebase information to Flask & writing sample data usign Pyrebase4
+# Flask app to test sending user's Firebase information to Flask & writing sample data usign p
 import pyrebase
 from flask import Flask, render_template, url_for, request, jsonify, redirect
 from datetime import datetime

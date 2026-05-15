@@ -67,7 +67,7 @@ void setup() {
     analogReference(AR_DEFAULT);
     analogReadResolution(12);
     myFilter.init(sampleRate, humFreq, true, true, true);
-    Serial.begin(115200);
+    Serial.begin(9600);
     delay(1000);
 
     for (int i = 0; i < 2000; i++) {
