@@ -56,9 +56,9 @@ const unsigned long emg_timeBudget = 2000;
 //   THRESH_HIGH_PCT — % spread to count as High   contraction
 // Percent spread = ((max - min) / min) * 100
 const unsigned long emg_WINDOW_MS       = 1000;
-const float         emg_THRESH_LOW_PCT  = 50.0f;
-const float         emg_THRESH_MED_PCT  = 100.0f;
-const float         emg_THRESH_HIGH_PCT = 200.0f;
+const float         emg_THRESH_LOW_PCT  = 35.0f;
+const float         emg_THRESH_MED_PCT  = 55.0f;
+const float         emg_THRESH_HIGH_PCT = 75.0f;
 
 unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
@@ -117,7 +117,7 @@ void setup() {
     analogReference(AR_DEFAULT);
     analogReadResolution(12);
     myFilter.init(sampleRate, humFreq, true, true, true);
-    Serial.begin(115200);
+    Serial.begin(9600);
     delay(1000);
 
     for (int i = 0; i < 2000; i++) {
