@@ -14,33 +14,61 @@
     <br>
 
     <!--Text-->
-    <div class="row mx-auto mt-3" style="width:80%;">
-        <div class="col-12 col-md-8 align-items-center">
-            <br><br><br>
+    <div class="row mx-auto mt-3" style="width:80%">
+        <div class="col-12 col-md-6 align-items-center">
+            <br><br><br><br><br><br><br>
             <h4 class=""><strong>What is Carpal Tunnel Syndrome?</strong></h4>
             <p class class="mt-3">Carpal tunnel syndrome is one of the most common hand conditions in the world.
                                 The carpal tunnel is located at the wrist on the palm side of the hand, and it is a narrow passageway that is surrounded by bones and ligaments.
                                 When the median nerve is compressed, the carpal tunnel experiences more pressure and narrowing, while leads to the development of carpal tunnel syndrome.
             </p>
         </div>
-        <div class="col-12 col-md-4 ps-5">
+        <div class="col-12 col-md-6 ps-5">
             <img src="{{url_for('static', filename = 'img/median_nerve_compress.jpg')}}" alt="Median Nerve Compression Image" class="d-block mx-auto mt-5 rounded-4 border border-3" style="width:100%">
         </div>
     </div>
 
-    <div class="mx-auto mt-3" style="width: 80%;">
+    <!--Symptoms-->
+    <div class="mx-auto" style="width:80%">
+        <br>
         <h4 class="mt-5"><strong>What Symptoms are Associated With the Condition?</strong></h4>
-        <p class class="mt-3">There are many symptoms associated with carpal tunnel, but there are three main symptoms that are associated with carpal tunnel syndrome. 
-                        These symptoms all occur around the wrist area, and they are:</p>
-        <ul class="d-flex justify-content-around">
-            <li>Tingling</li>
-            <li>Numbness</li>
-            <li>Weakness</li>
-        </ul>
-        <p class class="mt-3">Tingling and numbness are the first symptoms that arrive, and the thumb, middle, and ring fingers are usually affected.
-                            It is also possible that you might feel an electric shock in these fingers, and the sensation can also travel up the wrist into the arm.
-                            Weakness comes next, and it can cause you to drop objects and struggle to grip objects frequently.
-        </p>
+        <br>
+        <div class="row row-cols-1 row-cols-lg-3 g-4">
+            <div class="col">
+                <div class="card card-uses card-animation">
+                    <div class="card-image">
+                        <img class="card-img-top" src="{{ url_for('static', filename='img/tingling.jpg') }}" alt="Real-time Monitoring" />
+                    </div>
+                    <div class="card-body">
+                        <h4 class="card-title fs-5"><strong>Tingling</strong></h4>
+                        <p class="card-text">Tingling is one of the first symptoms that occurs during carpal tunnel. The thumb, middle, and ring fingers are usually affected. You might feel a small tingle sensation and minor discomfort.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card card-uses card-animation">
+                    <div class="card-image">
+                        <img class="card-img-top" src="{{ url_for('static', filename='img/numbness.jpg') }}" alt="Predictive Analytics">
+                    </div>
+                    <div class="card-body">
+                        <h4 class="card-title fs-5"><strong>Numbness</strong></h4>
+                        <p class="card-text">Numbness usually occurs alongside tingling. It is also possible that you might feel an electric shock in the three finger listed previously, and the sensation can travel up the wrist into the arm.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card card-uses card-animation">
+                    <div class="card-image">
+                        <img class="card-img-top" src="{{ url_for('static', filename='img/weakness.jpg') }}" alt="Personalized Recommendations">
+                    </div>
+                    <div class="card-body">
+                        <h4 class="card-title fs-5"><strong>Weakness</strong></h4>
+                        <p class="card-text">Weakness is usually one of the later symptoms of the condition. It can cause you to frequently drop objects and struggle to grip things. This is a surefire sign that you should take a break immediatlely.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
     </div>
     
     
