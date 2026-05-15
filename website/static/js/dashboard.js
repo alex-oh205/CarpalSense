@@ -242,7 +242,7 @@ async function calculateRiskAndSummary() {
     alertCount: 0,
     neutralPercent: 100,
     exposurePercent: 0,
-    breakRecommendation: 'All good!',
+    breakRecommendation: 'None',
     alerts: []
   };
 
@@ -257,15 +257,24 @@ async function calculateRiskAndSummary() {
   // const latestFlex = flexData[flexData.length - 1]?.y;
   // const latestEmg = emgData[emgData.length - 1]?.y;
   // const latestImu = imuData[imuData.length - 1]?.y;
-  let flexCounter = 0;
-  const snapshot1 = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/flexCounter`));
+  const snapshot1 = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/summary/alertCount`));
   if (snapshot1.exists()) {
-    flexCounter = snapshot1.val();
+    summary.alertCount = snapshot1.val();
+  }
+  let alertNum = 0;
+  const snapshot2 = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/summary/alerts`));
+  if (snapshot2.exists()) {
+    alertNum = Object.values(snapshot2.val()).length;
+  }
+  let flexCounter = 0;
+  const snapshot3 = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/flexCounter`));
+  if (snapshot3.exists()) {
+    flexCounter = snapshot3.val();
   }
   let emgCounter = 0;
-  const snapshot2 = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/emgCounter`));
-  if (snapshot2.exists()) {
-    emgCounter = snapshot2.val();
+  const snapshot4 = await get(ref(db, `users/${window.currentUser.uid}/sessions/${activeSessionId}/data/emgCounter`));
+  if (snapshot4.exists()) {
+    emgCounter = snapshot4.val();
   }
   let warningLabel = 'Good';
   let warningClass = 'metric-value-good';
@@ -273,26 +282,28 @@ async function calculateRiskAndSummary() {
   if (flexCounter > 250) {
     warningLabel = 'High';
     warningClass = 'metric-value-critical';
-    summary.alerts.push('Straighten your wrist and take a break.');
+    summary.alerts.push('Wrist bend has been high for an extended period. Adjust posture.');
   } else if (flexCounter > 125) {
     if (warningLabel === 'Good') {
       warningLabel = 'Caution';
       warningClass = 'metric-value-warning';
     }
-    summary.alerts.push('Adjust posture.');
+    summary.alerts.push('Wrist bend is high.');
   }
 
   if (emgCounter > 250) {
     warningLabel = 'High';
     warningClass = 'metric-value-critical';
-    summary.alerts.push('Muscle activity is elevated. Relax your wrist and take a break.');
+    summary.alerts.push('Wrist tension has been high for an extended period. Relax your wrist.');
   } else if (emgCounter > 125) {
     if (warningLabel === 'Good') {
       warningLabel = 'Caution';
       warningClass = 'metric-value-warning';
     }
-    summary.alerts.push('Muscle activity is above recommended range.');
+    summary.alerts.push('Wrist tension is high.');
   }
+
+  summary.alertCount += Math.max(summary.alerts.length - alertNum, 0);
 
   // if (imuCounter > 250) {
   //   warningLabel = 'High';
@@ -310,35 +321,34 @@ async function calculateRiskAndSummary() {
   summary.riskClass = warningClass;
 
   const highRiskSamplesFlex = flexData.filter(point => {
-    return point.y > 75;
+    return point.y > 65;
   }).map(point => point.x);
   const highRiskSamplesEmg = emgData.filter(point => {
-    return point.y > 75;
+    return point.y > 65;
   }).map(point => point.x);
   // const highRiskSamplesImu = imuData.filter(point => {
   //   return Math.abs(point.y) > 35;
   // }).map(point => point.x);
 
-  // 0.5 second intervals between each data point
-  const highRiskSeconds = [...new Set([...highRiskSamplesFlex, ...highRiskSamplesEmg])].length * 0.5;
+  // 1 second interval between each data point
+  const highRiskSeconds = [...new Set([...highRiskSamplesFlex, ...highRiskSamplesEmg])].length * 1;
   const totalSeconds = flexData.length > 0 ? flexData[flexData.length - 1].x : 0;
 
   summary.highRiskMinutes = Math.round(highRiskSeconds / 6) / 10;
   summary.totalTime = Math.round(totalSeconds / 6) / 10;
-  summary.alertCount = summary.alerts.length;
-  summary.neutralPercent = Math.round(((totalSeconds - highRiskSeconds) / totalSeconds) * 100);
-  summary.exposurePercent = Math.round((highRiskSeconds / totalSeconds) * 100);
+  summary.neutralPercent = totalSeconds === 0 ? 100 : Math.round(((totalSeconds - highRiskSeconds) / totalSeconds) * 100);
+  summary.exposurePercent = totalSeconds === 0 ? 0 : Math.round((highRiskSeconds / totalSeconds) * 100);
 
-  if (summary.alertCount === 0) {
+  if (summary.alerts.length === 0) {
     summary.alerts.push('No active alerts.');
   }
 
   if (summary.exposurePercent > 50) {
-    summary.breakRecommendation = 'Stop and stretch now';
+    summary.breakRecommendation = 'Stop and take a break';
   } else if (summary.exposurePercent > 25) {
-    summary.breakRecommendation = 'Take a short break soon';
+    summary.breakRecommendation = 'Take a break soon';
   } else {
-    summary.breakRecommendation = 'All good!';
+    summary.breakRecommendation = 'None';
   }
 
   updateSessionSummary(window.currentUser.uid, activeSessionId, summary);
@@ -358,7 +368,14 @@ function buildAlerts(messages) {
 
   messages.forEach(message => {
     const li = document.createElement('li');
+
     li.className = 'list-group-item alert-item';
+    if (message.includes('extended')) {
+      li.className = 'list-group-item alert-item border border-danger';
+    } else if (message.includes('high')) {
+      li.className = 'list-group-item alert-item border border-warning';
+    }
+
     li.textContent = message;
     alertList.appendChild(li);
   });
@@ -373,7 +390,7 @@ async function updateDashboardSummary() {
   const lastUpdate = document.getElementById('lastUpdate');
   const neutralTime = document.getElementById('neutralTime');
   const motionExposure = document.getElementById('motionExposure');
-  const breakRecommendation = document.getElementById('breakRecommendation');
+  // const breakRecommendation = document.getElementById('breakRecommendation');
 
   riskLevel.textContent = summary.riskLabel;
   riskLevel.className = `metric-value ${summary.riskClass}`;
@@ -382,7 +399,7 @@ async function updateDashboardSummary() {
   lastUpdate.textContent = formatTime(new Date());
   neutralTime.textContent = `${(summary.totalTime - summary.highRiskMinutes).toFixed(1)} min`;
   motionExposure.textContent = `${summary.exposurePercent}%`;
-  breakRecommendation.textContent = summary.breakRecommendation;
+  // breakRecommendation.textContent = summary.breakRecommendation;
   buildAlerts(summary.alerts);
 }
 
@@ -393,31 +410,37 @@ function updateHistorySummary(summary) {
   const alertCount = document.getElementById('historyAlertCount');
   const neutralTime = document.getElementById('historyNeutralTime');
   const motionExposure = document.getElementById('historyMotionExposure');
-  const breakRecommendation = document.getElementById('historyBreakRecommendation');
+  // const breakRecommendation = document.getElementById('historyBreakRecommendation');
 
-  if (!riskLevel || !highRiskMinutes || !alertCount || !neutralTime || !motionExposure || !breakRecommendation) return;
+  if (!riskLevel || !highRiskMinutes || !alertCount || !neutralTime || !motionExposure) return;
 
   if (!summary) {
     riskLevel.textContent = '--';
+    riskLevel.className = 'summary-value';
     highRiskMinutes.textContent = '--';
     alertCount.textContent = '--';
     neutralTime.textContent = '--';
     motionExposure.textContent = '--';
-    breakRecommendation.textContent = '--';
+    // breakRecommendation.textContent = '--';
     return;
   }
 
   riskLevel.textContent = summary.riskLabel || '--';
+  riskLevel.className = `summary-value ${summary.riskClass || ''}`;
   highRiskMinutes.textContent = summary.highRiskMinutes != null ? `${summary.highRiskMinutes.toFixed(1)} min` : '--';
   alertCount.textContent = summary.alertCount != null ? summary.alertCount : '--';
   neutralTime.textContent = summary.totalTime != null ? `${(summary.totalTime - summary.highRiskMinutes).toFixed(1)} min` : '--';
   motionExposure.textContent = summary.exposurePercent != null ? `${summary.exposurePercent}%` : '--';
-  breakRecommendation.textContent = summary.breakRecommendation || '--';
+  // breakRecommendation.textContent = summary.breakRecommendation || '--';
 }
 
 // Updates session summary in Firebase
 async function updateSessionSummary(userID, sessionId, summary) {
   if (!sessionId) return;
+  summary = structuredClone(summary);
+  if (summary.alerts[0] === 'No active alerts.') {
+    summary.alerts.shift();
+  }
   try {
     await update(ref(db, `users/${userID}/sessions/${sessionId}/summary`), summary);
   } catch (error) {
@@ -445,13 +468,13 @@ async function getSessionData(userID, sessionId, dataType) {
       snapshot.forEach(child => {
         const key = Number(child.key);
         if (!Number.isNaN(key)) {
-          items.push({ index: key, value: child.val() });
+          items.push({ index: key / 1000, value: child.val() });
         }
       });
     }
   })
   .catch((error) => {
-    alert('Unsuccessful, error: ' + error);
+    console.log('Unsuccessful, error: ' + error);
   });
 
   items.sort((a, b) => a.index - b.index);
@@ -459,7 +482,7 @@ async function getSessionData(userID, sessionId, dataType) {
 }
 
 // Creates a chart from sensor data
-async function createChart(dataType, id, sessionId = activeSessionId, updateSummary = true){
+async function createChart(dataType, id, sessionId = activeSessionId, updateSummary = true, showAll = false){
   let data = [];
   if (sessionId) {
     data = await getSessionData(window.currentUser.uid, sessionId, dataType);
@@ -467,9 +490,11 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
 
   let label = '';
   let datasets = [];
+  let maximumMin = 0;
 
   if (dataType === "bend") {
     label = 'Wrist Flexion (%)';
+    maximumMin = -100;
     datasets.push(
       {
         label:    `${label}`,     // Dataset label for legend
@@ -478,7 +503,7 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
         backgroundColor:  'rgba(255, 107, 169, 0.1)',    // Gradient fill color
         borderColor:      'rgba(255, 107, 169, 0.8)',    // Line color
         borderWidth:      2.5,   // Line width
-        pointRadius:      3,
+        pointRadius:      0,
         pointBackgroundColor: 'rgba(255, 107, 169, 1)',
         pointBorderColor: '#111827',
         pointBorderWidth: 1,
@@ -496,7 +521,7 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
         backgroundColor:  'rgba(122, 167, 255, 0.1)',    // Gradient fill color
         borderColor:      'rgba(122, 167, 255, 0.85)',   // Line color
         borderWidth:      2.5,   // Line width
-        pointRadius:      3,
+        pointRadius:      0,
         pointBackgroundColor: 'rgba(122, 167, 255, 1)',
         pointBorderColor: '#111827',
         pointBorderWidth: 1,
@@ -514,7 +539,7 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
         backgroundColor:  'rgba(251, 191, 36, 0.1)',    // Gradient fill color
         borderColor:      'rgba(251, 191, 36, 0.85)',   // Line color
         borderWidth:      2.5,   // Line width
-        pointRadius:      3,
+        pointRadius:      0,
         pointBackgroundColor: 'rgba(251, 191, 36, 1)',
         pointBorderColor: '#111827',
         pointBorderWidth: 1,
@@ -547,7 +572,7 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
           type: 'linear',
           title: {
             display: true,
-            text: 'Time',     // x-axis title
+            text: 'Time (s)',     // x-axis title
             font: {                   // font properties
               size: 14,
               weight: '600'
@@ -569,7 +594,9 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
             drawBorder: true,
             borderColor: 'rgba(255, 255, 255, 0.15)'
           },
-          suggestedMax: 10
+          suggestedMax: 60,
+          min: showAll || !data.at(-1) ? 0 : Math.max(0, Math.round((data.at(-1).x - 60) * 10) / 10),
+          max: data.at(-1) ? Math.max(60, Math.round((data.at(-1).x + 1) * 10) / 10) : 60
         },
         y: {                              // y-axis properties
           title: {
@@ -593,7 +620,9 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
             color: 'rgba(255, 255, 255, 0.08)',
             drawBorder: true,
             borderColor: 'rgba(255, 255, 255, 0.15)'
-          }
+          },
+          suggestedMax: 100,
+          suggestedMin: maximumMin
         }
       },
       plugins: {                  // Display options for title and legend
@@ -667,6 +696,11 @@ async function updateChartData(chart, dataType) {
 
     // Update the chart's data
     chart.data.datasets[0].data = newData;
+    const latestX = newData.at(-1)?.x;
+    if (latestX && latestX > 60) {
+      chart.options.scales.x.min = Math.round((latestX - 60) * 10) / 10;
+      chart.options.scales.x.max = Math.round((latestX + 1) * 10) / 10;
+    }
 
     // Update the chart to reflect new data
     chart.update('none'); // 'none' prevents animation for smoother real-time updates
@@ -767,7 +801,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   sensorChart = await createChart(dataType, 'sensorGraph');
 
-  historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false);
+  historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false, true);
 
   // Track Firebase connectivity state
   const connectedRef = ref(db, '.info/connected');
@@ -795,7 +829,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('historyDataType').addEventListener('change', async (event) => {
     historyDataType = event.target.value;
     destroyHistoryChart();
-    historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false);
+    historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false, true);
   });
 
   // Update history graph on session selection change
@@ -804,7 +838,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const summary = await getSessionSummary(window.currentUser.uid, selectedHistorySessionId);
     updateHistorySummary(summary);
     destroyHistoryChart();
-    historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false);
+    historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false, true);
     updateHistoryControls();
   });
 
@@ -874,38 +908,41 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Delete past session on delete session button click
-  document.getElementById('deleteSessionBtn').addEventListener('click', async () => {
+  // Delete past session on delete session button click (on modal)
+  document.getElementById('deleteSessionConfirmBtn').addEventListener('click', async () => {
     const sessionsSelect = document.getElementById('historySessions');
     const selectedSession = sessionsSelect ? sessionsSelect.value : '';
     if (!selectedSession) return;
 
-    if (confirm('Delete this session permanently? This cannot be undone.')) {
-      const userID = window.currentUser.uid;
-      await deleteSession(userID, selectedSession);
-      if (activeSessionId === selectedSession) {
-        activeSessionId = null;
-        activeSessionName = '';
-        stopRealTimeUpdates();
-        await setServerSessionId(null);
-        setCurrentSessionLabel('No active session');
-        updateSessionControls();
-      }
-      selectedHistorySessionId = '';
-      await loadSessions(userID);
-      if (sessionsSelect) {
-        sessionsSelect.value = '';
-      }
-      destroyHistoryChart();
-      updateHistorySummary(null);
-      updateHistoryControls();
-      if (sensorChart && typeof sensorChart.destroy === 'function') {
-        sensorChart.destroy();
-      }
-      createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
-        sensorChart = chart;
-      });
+    const userID = window.currentUser.uid;
+    await deleteSession(userID, selectedSession);
+    if (activeSessionId === selectedSession) {
+      activeSessionId = null;
+      activeSessionName = '';
+      stopRealTimeUpdates();
+      await setServerSessionId(null);
+      setCurrentSessionLabel('No active session');
+      updateSessionControls();
     }
+    selectedHistorySessionId = '';
+    await loadSessions(userID);
+    if (sessionsSelect) {
+      sessionsSelect.value = '';
+    }
+    destroyHistoryChart();
+    historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false, true);
+    updateHistorySummary(null);
+    updateHistoryControls();
+    if (sensorChart && typeof sensorChart.destroy === 'function') {
+      sensorChart.destroy();
+    }
+    createChart(document.getElementById('dataType').value, 'sensorGraph').then(chart => {
+      sensorChart = chart;
+    });
+
+    const modal = document.getElementById('deleteSessionModal');
+    const modalInstance = bootstrap.Modal.getInstance(modal);
+    modalInstance.hide();
   });
 
   // Stop real-time updates when page unloads (user navigates away or logs out)

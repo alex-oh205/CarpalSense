@@ -134,23 +134,20 @@ def data():
 
                 # Write Arduino data to Firebase under the currently active session if one is registered
                 if currentSessionId:
-                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({str(int(sessionTime)): flex}, idToken)
-                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/emg').update({str(int(sessionTime)): emg}, idToken)
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({str(round(sessionTime * 1000)): flex}, idToken)
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/emg').update({str(round(sessionTime * 1000)): emg}, idToken)
                     # db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/imu').update({sessionTime: imu}, idToken)
-                    flex_inc = flexHigh if flexHigh > 0 else -2
+                    flex_inc = flexHigh if flexHigh > 0 else -10
                     try:
-                        # TARGET THE NODE DIRECTLY: Use the flex_inc variable here as the increment value
                         db.child(f"users/{uid}/sessions/{currentSessionId}/data/flexCounter").set({".sv": {"increment": flex_inc}}, idToken)
                     except Exception as e:
-                        print(f"Flex update blocked by rules (likely dropped below 0): {e}")
+                        pass
 
-                    # 3. Handle emgCounter logic securely
                     emg_inc = emgHigh if emgHigh > 0 else -2
                     try:
-                        # TARGET THE NODE DIRECTLY: Use the emg_inc variable here as the increment value
                         db.child(f"users/{uid}/sessions/{currentSessionId}/data/emgCounter").set({".sv": {"increment": emg_inc}}, idToken)
                     except Exception as e:
-                        print(f"EMG update blocked by rules (likely dropped below 0): {e}")
+                        pass
         
         return 'Success', 200
 
@@ -166,7 +163,7 @@ def session():
         lastData = db.child('users/' + currentUser['uid'] + '/sessions/' + currentSessionId +'/data/bend').order_by_key().limit_to_last(1).get(idToken)
         if lastData.each():
             for item in lastData.each():
-                sessionTime = float(item.key())
+                sessionTime = int(item.key()) / 1000
         else:
             sessionTime = 0
     
@@ -195,4 +192,4 @@ def session_data():
 if __name__ == "__main__":
 
     # Run app through port 5000 on local dev
-    app.run(debug=True, port=5000, host="172.20.10.9")
+    app.run(debug=True, port=5000, host="192.168.0.107")

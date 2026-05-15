@@ -21,10 +21,11 @@
             <div class="row">
                 <div class="card rounded-5 p-2 col-12 col-lg-9 col-xxl-6 mx-auto banner-card">
                     <div class="card-body">
-                        <video class="rounded-4" width="100%" style="aspect-ratio: 16 / 9;" controls>
-                            <source src="{{ url_for('static', filename='/static/videos/demo.mp4') }}" type="video/mp4">
+                        <!-- <video class="rounded-4" width="100%" style="aspect-ratio: 16 / 9;" controls>
+                            <source src="{{ url_for('static', filename='/videos/demo.mp4') }}" type="video/mp4">
                             Your browser does not support the video tag.
-                        </video>
+                        </video> -->
+                        <img src="{{ url_for('static', filename='/img/sensor.jpg') }}" alt="CarpalSense Image" class="rounded-4 object-fit-cover w-100" style="aspect-ratio: 16 / 9;">
                     </div>
                 </div>
             </div>

@@ -135,10 +135,10 @@ WiFiClient client;
 
 // server address:
 //char server[] = "jsonplaceholder.typicode.com"; // for public domain server
-IPAddress server(172, 20, 10, 9); // for localhost server (server IP address can be found with ipconfig or ifconfig)
+IPAddress server(192, 168, 0, 107); // for localhost server (server IP address can be found with ipconfig or ifconfig)
 
 unsigned long lastConnectionTime = 0;
-const unsigned long postingInterval = 10L * 25L; // delay between updates, in milliseconds (10L * 50L is around 1 second between requests)
+const unsigned long postingInterval = 10L * 50L; // delay between updates, in milliseconds (10L * 50L is around 1 second between requests)
 
 // ============START OF BME SENSOR SETUP=============
 // --- EMG SENSOR: RMS Helper Function ---
