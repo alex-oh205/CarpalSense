@@ -2,6 +2,14 @@
     overflow: hidden;
 }
 
+.w-40 {
+    width: 40%;
+}
+
+.w-875 {
+    width: 87.5%;
+}
+
 .about img {                                /* create animation for making the face zoom in */
     transform-origin: 50% 20%;
     transition: transform 2s ease-out;
@@ -12,7 +20,7 @@
 }
 
 :root {
-    --bg: #07111f;
+    --bg: #050e18;
     --surface: #111827;
     --surface-2: #141c2c;
     --surface-3: #1e2a42;
@@ -41,7 +49,7 @@
     background: linear-gradient(135deg, var(--bg) 0%, rgb(55, 0, 110) 100%);
     background-size: cover;
     background-position: center;
-    padding: 164px 50px 50px;
+    padding: 164px 50px 75px;
 }
 
 .banner h1 {                                /* banner title animation */
@@ -63,6 +71,7 @@
     background: linear-gradient(135deg, hsl(from var(--bg) h 40% 50%) 0%, hsl(from rgb(55, 0, 110) h 40% 50%) 100%);
     background-size: cover;
     background-position: center;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
     transform: translateY(4%);
     opacity: 0;
     animation: slideIn 4s cubic-bezier(0.215, 0.61, 0.355, 1) 0.2s forwards;
@@ -295,7 +304,7 @@ nav {
 
 .my-table, .my-table th, .my-table td {
     background-color: transparent !important;
-    border: 2px solid rgba(255, 255, 255, 0.15) !important;
+    /* border: 2px solid rgba(255, 255, 255, 0.15) !important; */
 }
 
 .heading {
@@ -330,7 +339,7 @@ body:has(.dashboard) {
 }
 
 .dashboard-card {
-    background-color: rgb(from var(--surface) r g b / 0.5);
+    background-color: hsl(from var(--surface) h 20% 20% / 0.5);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 16px 28px rgba(0, 0, 0, 0.18);
 }

@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-window.addEventListener('scroll', function(event) {
+function scrollNavbar(event) {
   const navbar = document.getElementById('navbar');
   if (window.scrollY > 20) {
     navbar.classList.add('background-color-dark');
@@ -109,7 +109,10 @@ window.addEventListener('scroll', function(event) {
     navbar.classList.remove('background-color-dark');
     navbar.classList.remove('navbar-shadow');
   }
-});
+}
+
+scrollNavbar(null);
+window.addEventListener('scroll', scrollNavbar);
 
 (() => {
   'use strict'

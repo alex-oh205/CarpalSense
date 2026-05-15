@@ -43,9 +43,9 @@ const unsigned long timeBudget = 2000;
 // Percent spread = ((max - min) / min) * 100
 
 const unsigned long WINDOW_MS       = 1000;
-const float         THRESH_LOW_PCT  = 25.0f;
-const float         THRESH_MED_PCT  = 50.0f;
-const float         THRESH_HIGH_PCT = 75.0f;
+const float         THRESH_LOW_PCT  = 50.0f;
+const float         THRESH_MED_PCT  = 100.0f;
+const float         THRESH_HIGH_PCT = 200.0f;
 
 unsigned long windowStart = 0;
 long          windowMin   = LONG_MAX;

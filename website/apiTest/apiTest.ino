@@ -54,9 +54,10 @@ const float FLEX_R_DIV = 47000.0;
 //   1. Hold sensor completely flat  → note raw, set flex_rawFlat
 //   2. Bend fully FORWARD (normal)  → note raw, set flex_rawForward
 //   3. Bend fully BACKWARD          → note raw, set flex_rawBackward
-int flex_rawFlat     = 22;  // Resting flat value
-int flex_rawForward  = 7;   // Raw when fully bent forward
-int flex_rawBackward = 40;  // Raw when fully bent backward
+int flex_position = 0;
+int flex_rawFlat     = 550;  // Resting flat value
+int flex_rawForward  = 420;   // Raw when fully bent forward
+int flex_rawBackward = 610;  // Raw when fully bent backward
 
 const int flex_DEADZONE = 2;
 int returnValue = 0;        // Flex sensor output: 0 (flat) to 3 (full bend)
@@ -67,6 +68,7 @@ int level = 0;             // EMG output: 0 (no contraction) to 3 (high contract
 #define SensorInputPin A5
 #define RMS_WINDOW 100
 
+float pct = 0.0f;
 long emg_rmsBuffer[RMS_WINDOW] = {0};
 int  emg_rmsIndex = 0;
 long emg_rmsSum   = 0;
@@ -88,9 +90,9 @@ const unsigned long emg_timeBudget = 2000;
 //   THRESH_HIGH_PCT — % spread to count as High   contraction
 // Percent spread = ((max - min) / min) * 100
 const unsigned long emg_WINDOW_MS       = 1000;
-const float         emg_THRESH_LOW_PCT  = 25.0f;
-const float         emg_THRESH_MED_PCT  = 50.0f;
-const float         emg_THRESH_HIGH_PCT = 75.0f;
+const float         emg_THRESH_LOW_PCT  = 50.0f;
+const float         emg_THRESH_MED_PCT  = 100.0f;
+const float         emg_THRESH_HIGH_PCT = 200.0f;
 
 unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
@@ -117,6 +119,8 @@ int           flex_history[3]        = {0, 0, 0};
 int           historyIndex           = 0;
 bool          historyFull            = false;
 const int     SPIKE_FILTER_THRESHOLD = 4;
+int flex_sum = 0;
+int emg_sum = 0;
 
 // ==========END OF SENSOR LIBRARIES AND VARIABLES===================
 
@@ -131,7 +135,7 @@ WiFiClient client;
 
 // server address:
 //char server[] = "jsonplaceholder.typicode.com"; // for public domain server
-IPAddress server(172, 20, 10, 6); // for localhost server (server IP address can be found with ipconfig or ifconfig)
+IPAddress server(192, 168, 0, 107); // for localhost server (server IP address can be found with ipconfig or ifconfig)
 
 unsigned long lastConnectionTime = 0;
 const unsigned long postingInterval = 10L * 50L; // delay between updates, in milliseconds (10L * 50L is around 1 second between requests)
@@ -163,7 +167,7 @@ void setup(){
   analogReference(AR_DEFAULT);
   analogReadResolution(12);
   myFilter.init(sampleRate, humFreq, true, true, true);
-  Serial.begin(115200);
+  Serial.begin(9600);
   delay(1000);
 
   for (int i = 0; i < 2000; i++) {
@@ -205,66 +209,31 @@ void setup(){
   printWifiStatus(); // you're connected now, so print out the status
 }
 
-void loop(){
+void loop() {
 
-//===========START OF BME CODE + MODEL============
-
-  // ── EMG SENSOR: Data Collection ──
+    // ── EMG: Sample every iteration (needed for 500Hz filter) ──
     emg_timeStamp = micros();
+    while (millis() - emg_windowStart < emg_WINDOW_MS) {
+      analogRead(SensorInputPin);
+      int emg_Value = analogRead(SensorInputPin);
+      int centered  = emg_Value - 3700;
+      int filtered  = myFilter.update(centered);
+      long envelope = (long)filtered * filtered;
+      long smoothed = computeRMS(envelope);
 
-    analogRead(SensorInputPin);
-    int emg_Value    = analogRead(SensorInputPin);
-    int centered     = emg_Value - 3700;
-    int filtered     = myFilter.update(centered);
-    long envelope    = (long)filtered * filtered;
-    long smoothed    = computeRMS(envelope);
-
-    if (smoothed < emg_windowMin) emg_windowMin = smoothed;
-    if (smoothed > emg_windowMax) emg_windowMax = smoothed;
-
-    unsigned long now = millis();
-    if (now - emg_windowStart >= emg_WINDOW_MS) {
-
-        float pct = 0.0f;
-
-        if (emg_windowMin > 0) {
-            pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
-
-            if      (pct >= emg_THRESH_HIGH_PCT) level = 3;
-            else if (pct >= emg_THRESH_MED_PCT)  level = 2;
-            else if (pct >= emg_THRESH_LOW_PCT)  level = 1;
-            else                                 level = 0;
-        }
-
-        Serial.println("=======EMG SENSOR=======");
-        Serial.print("min: ");
-        Serial.print(emg_windowMin);
-        Serial.print("  max: ");
-        Serial.print(emg_windowMax);
-        Serial.print("  spread: ");
-        Serial.print(pct, 1);
-        Serial.print("%  ->  ");
-        Serial.println(levelLabel(level));
-
-        emg_windowMin   = LONG_MAX;
-        emg_windowMax   = 0;
-        emg_windowStart = now;
+      if (smoothed < emg_windowMin) emg_windowMin = smoothed;
+      if (smoothed > emg_windowMax) emg_windowMax = smoothed;
     }
 
-    // ── FLEX SENSOR: Data Collection ──
+    // ── FLEX: Read every iteration (lightweight, no print yet) ──
+    flex_position = 0;
     int flex_raw = analogRead(FLEX_PIN);
-
-    float flex_voltage    = flex_raw * (FLEX_VCC / 1023.0);
+    float flex_voltage    = flex_raw * (FLEX_VCC / 4095.0);  // fixed: 12-bit ADC
     float flex_resistance = 0;
     if (flex_voltage > 0) {
         flex_resistance = FLEX_R_DIV * (FLEX_VCC / flex_voltage - 1.0);
     }
 
-    // Compute signed position (-100 to +100)
-    //   positive = forward bend
-    //   negative = backward bend
-    //   0        = flat
-    int flex_position = 0;
     if (flex_raw < flex_rawFlat - flex_DEADZONE) {
         flex_position = constrain(
             (int)((flex_rawFlat - flex_raw) / (float)(flex_rawFlat - flex_rawForward) * 100.0),
@@ -296,81 +265,80 @@ void loop(){
         returnValue    = 0;
     }
 
-    Serial.println("=======FLEX SENSOR=======");
-    Serial.print(flex_raw);
-    Serial.print(" | ");
-    Serial.print(flex_voltage, 2);
-    Serial.print("V | ");
-    Serial.print(flex_resistance / 1000.0, 1);
-    Serial.print("KΩ | ");
-    Serial.print(flex_position);
-    Serial.print(" | ");
-    Serial.print(flex_direction);
-    Serial.print(" ");
-    Serial.print(flex_zone);
-    Serial.print(" | ");
-    Serial.println(returnValue);
+    // ── Once per second: print everything + run math model ──
+    unsigned long now = millis();
 
+      pct = 0.0f;
+      if (emg_windowMin > 0) {
+          pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
 
-    // ============================================================
-    //  SECTION 3: MATH MODEL
-    // ============================================================
+          if      (pct >= emg_THRESH_HIGH_PCT) level = 3;
+          else if (pct >= emg_THRESH_MED_PCT)  level = 2;
+          else if (pct >= emg_THRESH_LOW_PCT)  level = 1;
+          else                                 level = 0;
+      }
 
-    // --- Spike Filter & Counter System ---
-    // Each loop, the current EMG level and flex returnValue are stored
-    // into their respective 3-reading history arrays.
-    // Once 3 readings have been collected, the sum of each sensor's
-    // history is checked against SPIKE_FILTER_THRESHOLD.
-    // Both sensors must independently pass the threshold for their
-    // values to be counted — this prevents a single accidental spike
-    // (e.g. one High + two No Contractions = sum of 3) from inflating
-    // the counter, while consistent readings (e.g. two Low + one Medium
-    // = sum of 4) are accepted and added.
-    // The history window is rolling — each new reading replaces the oldest.
+      Serial.println("=======EMG SENSOR=======");
+      Serial.print("min: ");        Serial.print(emg_windowMin);
+      Serial.print("  max: ");      Serial.print(emg_windowMax);
+      Serial.print("  spread: ");   Serial.print(pct, 1);
+      Serial.print("%  ->  ");      Serial.println(levelLabel(level));
 
-    // Store current readings into rolling history
-    emg_history[historyIndex]  = level;
-    flex_history[historyIndex] = returnValue;
-    historyIndex = (historyIndex + 1) % 3;
-    if (historyIndex == 0) historyFull = true;
+      Serial.println("=======FLEX SENSOR=======");
+      Serial.print(flex_raw);
+      Serial.print(" | ");          Serial.print(flex_voltage, 2);
+      Serial.print("V | ");         Serial.print(flex_resistance / 1000.0, 1);
+      Serial.print("KΩ | ");        Serial.print(flex_position);
+      Serial.print(" | ");          Serial.print(flex_direction);
+      Serial.print(" ");            Serial.print(flex_zone);
+      Serial.print(" | ");          Serial.println(returnValue);
 
-    int combinedScore = 0;
-    bool emg_passed   = false;
-    bool flex_passed  = false;
+      emg_history[historyIndex]  = level;
+      flex_history[historyIndex] = returnValue;
+      historyIndex = (historyIndex + 1) % 3;
+      if (historyIndex == 0) historyFull = true;
 
-    if (historyFull) {
-        // Sum the last 3 readings for each sensor
-        int emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
-        int flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
+      emg_sum = 0;
+      flex_sum = 0;
+      bool emg_passed   = false;
+      bool flex_passed  = false;
+      int combinedScore = 0;
 
-        // Only count if each sensor's 3-reading sum meets the threshold
-        if (emg_sum >= SPIKE_FILTER_THRESHOLD) {
+      if (historyFull) {
+          emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
+          flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
+
+          if (emg_sum  >= SPIKE_FILTER_THRESHOLD) {
             combinedScore += emg_sum;
-            emg_passed = true;
-        }
-        if (flex_sum >= SPIKE_FILTER_THRESHOLD) {
+            emg_passed  = true;
+          } else {
+            emg_sum = 0;
+          }
+          if (flex_sum >= SPIKE_FILTER_THRESHOLD) {
             combinedScore += flex_sum;
             flex_passed = true;
-        }
+          } else {
+            flex_sum = 0;
+          }
 
-        ctsCounter += combinedScore;
-    }
+          ctsCounter += combinedScore;
+      }
 
-    if (ctsCounter >= CTS_THRESHOLD) {
-        ctsRisk = true;
-    }
+      if (ctsCounter >= CTS_THRESHOLD) ctsRisk = true;
 
-    Serial.println("=======MATH MODEL=======");
-    Serial.print("EMG  last 3 sum: "); Serial.print(emg_history[0] + emg_history[1] + emg_history[2]);
-    Serial.print("  passed: ");        Serial.println(emg_passed  ? "YES" : "NO");
-    Serial.print("Flex last 3 sum: "); Serial.print(flex_history[0] + flex_history[1] + flex_history[2]);
-    Serial.print("  passed: ");        Serial.println(flex_passed ? "YES" : "NO");
-    Serial.print("Combined Score: ");  Serial.print(combinedScore);
-    Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
-    Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
-    Serial.println();
+      Serial.println("=======MATH MODEL=======");
+      Serial.print("EMG  last 3 sum: "); Serial.print(emg_history[0] + emg_history[1] + emg_history[2]);
+      Serial.print("  passed: ");        Serial.println(emg_passed  ? "YES" : "NO");
+      Serial.print("Flex last 3 sum: "); Serial.print(flex_history[0] + flex_history[1] + flex_history[2]);
+      Serial.print("  passed: ");        Serial.println(flex_passed ? "YES" : "NO");
+      Serial.print("Combined Score: ");  Serial.print(combinedScore);
+      Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
+      Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
+      Serial.println();
 
-    delay(1000);
+      emg_windowMin   = LONG_MAX;
+      emg_windowMax   = 0;
+      emg_windowStart = millis();
 //====================END OF BME CODE + MODEL===============
 
   StaticJsonDocument<200> doc;
@@ -399,10 +367,6 @@ void httpRequest() {
   // close any connection before send a new request to free the socket
   client.stop();
 
-  // call flex() function to get flex sensor value
-  flex();  
-  // call myoware() 
-  myoware();
   // if there's a successful connection:
   if (client.connect(server, 5000)) {
     Serial.println("connecting...");
@@ -411,11 +375,11 @@ void httpRequest() {
     // The Flask route to call should be inbetween the "/" and "?" (ex:  GET /test?...
     // where "test" is the Flask route that will GET the data, "distance" is the key
     // and the value is provided by:  String(distance))
-    String request = "GET /data?bend=" + String(bend) + "&emg=" + String(smoothed) + " HTTP/1.1";
+    String request = "GET /data?flex=" + String(flex_position) + "&emg=" + String(pct) + "&flexHigh=" + String(flex_sum) + "&emgHigh=" + String(emg_sum) + " HTTP/1.1";
     client.println(request);
 
     // set the host as server IP address
-    client.println("Host: 172.20.10.6");
+    client.println("Host: 172.20.10.9");
 
     // other request properties
     client.println("User-Agent: ArduinoWiFi/1.1");

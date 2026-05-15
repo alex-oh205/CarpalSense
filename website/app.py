@@ -72,7 +72,7 @@ def inject_globals():
 # Route to Pyrebase setup and transfer Arduino data to Firebase
 @app.route('/data', methods=['GET', 'POST'])
 def data():
-    global config, currentUser, db, timeStamp, sessionTime, idToken
+    global config, currentUser, db, timeStamp, sessionTime, idToken, prevSessionTime
 
     # POST request (FB configuration sent from login.js, request.method defaults to GET)
     if request.method == 'POST':
@@ -116,12 +116,16 @@ def data():
         else:
             if collectingData:
                 # Take parameters from Arduino request & assign value to variable "value"
-                bend = request.args.get('bend')
-                emg = request.args.get('emg')
+                flex = request.args.get('flex', type=int)
+                emg = request.args.get('emg', type=float)
+                flexHigh = request.args.get('flexHigh', type=int)
+                emgHigh = request.args.get('emgHigh', type=int)
                 # imu = request.args.get('imu')
 
-                print('Bend: ' + str(bend), flush=True)
+                print('Flex: ' + str(flex), flush=True)
                 print('EMG: ' + str(emg), flush=True)
+                print('Flex High: ' + str(flexHigh), flush=True)
+                print('EMG High: ' + str(emgHigh), flush=True)
                 # print('IMU: ' + imu, flush=True)
 
                 uid = currentUser['uid'] if isinstance(currentUser, dict) else currentUser
@@ -130,9 +134,20 @@ def data():
 
                 # Write Arduino data to Firebase under the currently active session if one is registered
                 if currentSessionId:
-                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({sessionTime: bend}, idToken)
-                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/emg').update({sessionTime: emg}, idToken)
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/bend').update({str(round(sessionTime * 1000)): flex}, idToken)
+                    db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/emg').update({str(round(sessionTime * 1000)): emg}, idToken)
                     # db.child('users/' + uid + '/sessions/' + currentSessionId + '/data/imu').update({sessionTime: imu}, idToken)
+                    flex_inc = flexHigh if flexHigh > 0 else -10
+                    try:
+                        db.child(f"users/{uid}/sessions/{currentSessionId}/data/flexCounter").set({".sv": {"increment": flex_inc}}, idToken)
+                    except Exception as e:
+                        pass
+
+                    emg_inc = emgHigh if emgHigh > 0 else -2
+                    try:
+                        db.child(f"users/{uid}/sessions/{currentSessionId}/data/emgCounter").set({".sv": {"increment": emg_inc}}, idToken)
+                    except Exception as e:
+                        pass
         
         return 'Success', 200
 
@@ -148,7 +163,7 @@ def session():
         lastData = db.child('users/' + currentUser['uid'] + '/sessions/' + currentSessionId +'/data/bend').order_by_key().limit_to_last(1).get(idToken)
         if lastData.each():
             for item in lastData.each():
-                sessionTime = float(item.key())
+                sessionTime = int(item.key()) / 1000
         else:
             sessionTime = 0
     
@@ -177,4 +192,4 @@ def session_data():
 if __name__ == "__main__":
 
     # Run app through port 5000 on local dev
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000, host="10.81.230.226")

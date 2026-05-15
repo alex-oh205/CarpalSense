@@ -22,9 +22,9 @@ const float FLEX_R_DIV = 47000.0;
 //   1. Hold sensor completely flat  → note raw, set flex_rawFlat
 //   2. Bend fully FORWARD (normal)  → note raw, set flex_rawForward
 //   3. Bend fully BACKWARD          → note raw, set flex_rawBackward
-int flex_rawFlat     = 22;  // Resting flat value
-int flex_rawForward  = 7;   // Raw when fully bent forward
-int flex_rawBackward = 40;  // Raw when fully bent backward
+int flex_rawFlat     = 550;  // Resting flat value
+int flex_rawForward  = 420;   // Raw when fully bent forward
+int flex_rawBackward = 610;  // Raw when fully bent backward
 
 const int flex_DEADZONE = 2;
 int returnValue = 0;        // Flex sensor output: 0 (flat) to 3 (full bend)
@@ -56,8 +56,8 @@ const unsigned long emg_timeBudget = 2000;
 //   THRESH_HIGH_PCT — % spread to count as High   contraction
 // Percent spread = ((max - min) / min) * 100
 const unsigned long emg_WINDOW_MS       = 1000;
-const float         emg_THRESH_LOW_PCT  = 25.0f;
-const float         emg_THRESH_MED_PCT  = 50.0f;
+const float         emg_THRESH_LOW_PCT  = 35.0f;
+const float         emg_THRESH_MED_PCT  = 55.0f;
 const float         emg_THRESH_HIGH_PCT = 75.0f;
 
 unsigned long emg_windowStart = 0;
@@ -77,7 +77,7 @@ long          emg_windowMax   = 0;
 //                             e.g. 1 high + 2 none = sum of 3, rejected;
 //                                  2 low  + 1 med  = sum of 4, accepted)
 long          ctsCounter             = 0;
-const long    CTS_THRESHOLD          = 500;
+const long    CTS_THRESHOLD          = 500000;
 bool          ctsRisk                = false;
 
 int           emg_history[3]         = {0, 0, 0};
@@ -117,7 +117,7 @@ void setup() {
     analogReference(AR_DEFAULT);
     analogReadResolution(12);
     myFilter.init(sampleRate, humFreq, true, true, true);
-    Serial.begin(115200);
+    Serial.begin(9600);
     delay(1000);
 
     for (int i = 0; i < 2000; i++) {
@@ -137,61 +137,27 @@ void setup() {
 
 void loop() {
 
-    // ── EMG SENSOR: Data Collection ──
+    // ── EMG: Sample every iteration (needed for 500Hz filter) ──
     emg_timeStamp = micros();
 
     analogRead(SensorInputPin);
-    int emg_Value    = analogRead(SensorInputPin);
-    int centered     = emg_Value - 3700;
-    int filtered     = myFilter.update(centered);
-    long envelope    = (long)filtered * filtered;
-    long smoothed    = computeRMS(envelope);
+    int emg_Value = analogRead(SensorInputPin);
+    int centered  = emg_Value - 3700;
+    int filtered  = myFilter.update(centered);
+    long envelope = (long)filtered * filtered;
+    long smoothed = computeRMS(envelope);
 
     if (smoothed < emg_windowMin) emg_windowMin = smoothed;
     if (smoothed > emg_windowMax) emg_windowMax = smoothed;
 
-    unsigned long now = millis();
-    if (now - emg_windowStart >= emg_WINDOW_MS) {
-
-        float pct = 0.0f;
-
-        if (emg_windowMin > 0) {
-            pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
-
-            if      (pct >= emg_THRESH_HIGH_PCT) level = 3;
-            else if (pct >= emg_THRESH_MED_PCT)  level = 2;
-            else if (pct >= emg_THRESH_LOW_PCT)  level = 1;
-            else                                 level = 0;
-        }
-
-        Serial.println("=======EMG SENSOR=======");
-        Serial.print("min: ");
-        Serial.print(emg_windowMin);
-        Serial.print("  max: ");
-        Serial.print(emg_windowMax);
-        Serial.print("  spread: ");
-        Serial.print(pct, 1);
-        Serial.print("%  ->  ");
-        Serial.println(levelLabel(level));
-
-        emg_windowMin   = LONG_MAX;
-        emg_windowMax   = 0;
-        emg_windowStart = now;
-    }
-
-    // ── FLEX SENSOR: Data Collection ──
+    // ── FLEX: Read every iteration (lightweight, no print yet) ──
     int flex_raw = analogRead(FLEX_PIN);
-
-    float flex_voltage    = flex_raw * (FLEX_VCC / 1023.0);
+    float flex_voltage    = flex_raw * (FLEX_VCC / 4095.0);  // fixed: 12-bit ADC
     float flex_resistance = 0;
     if (flex_voltage > 0) {
         flex_resistance = FLEX_R_DIV * (FLEX_VCC / flex_voltage - 1.0);
     }
 
-    // Compute signed position (-100 to +100)
-    //   positive = forward bend
-    //   negative = backward bend
-    //   0        = flat
     int flex_position = 0;
     if (flex_raw < flex_rawFlat - flex_DEADZONE) {
         flex_position = constrain(
@@ -224,79 +190,69 @@ void loop() {
         returnValue    = 0;
     }
 
-    Serial.println("=======FLEX SENSOR=======");
-    Serial.print(flex_raw);
-    Serial.print(" | ");
-    Serial.print(flex_voltage, 2);
-    Serial.print("V | ");
-    Serial.print(flex_resistance / 1000.0, 1);
-    Serial.print("KΩ | ");
-    Serial.print(flex_position);
-    Serial.print(" | ");
-    Serial.print(flex_direction);
-    Serial.print(" ");
-    Serial.print(flex_zone);
-    Serial.print(" | ");
-    Serial.println(returnValue);
+    // ── Once per second: print everything + run math model ──
+    unsigned long now = millis();
+    if (now - emg_windowStart >= emg_WINDOW_MS) {
 
+        float pct = 0.0f;
+        if (emg_windowMin > 0) {
+            pct = ((float)(emg_windowMax - emg_windowMin) / (float)emg_windowMin) * 100.0f;
 
-    // ============================================================
-    //  SECTION 3: MATH MODEL
-    // ============================================================
-
-    // --- Spike Filter & Counter System ---
-    // Each loop, the current EMG level and flex returnValue are stored
-    // into their respective 3-reading history arrays.
-    // Once 3 readings have been collected, the sum of each sensor's
-    // history is checked against SPIKE_FILTER_THRESHOLD.
-    // Both sensors must independently pass the threshold for their
-    // values to be counted — this prevents a single accidental spike
-    // (e.g. one High + two No Contractions = sum of 3) from inflating
-    // the counter, while consistent readings (e.g. two Low + one Medium
-    // = sum of 4) are accepted and added.
-    // The history window is rolling — each new reading replaces the oldest.
-
-    // Store current readings into rolling history
-    emg_history[historyIndex]  = level;
-    flex_history[historyIndex] = returnValue;
-    historyIndex = (historyIndex + 1) % 3;
-    if (historyIndex == 0) historyFull = true;
-
-    int combinedScore = 0;
-    bool emg_passed   = false;
-    bool flex_passed  = false;
-
-    if (historyFull) {
-        // Sum the last 3 readings for each sensor
-        int emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
-        int flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
-
-        // Only count if each sensor's 3-reading sum meets the threshold
-        if (emg_sum >= SPIKE_FILTER_THRESHOLD) {
-            combinedScore += emg_sum;
-            emg_passed = true;
-        }
-        if (flex_sum >= SPIKE_FILTER_THRESHOLD) {
-            combinedScore += flex_sum;
-            flex_passed = true;
+            if      (pct >= emg_THRESH_HIGH_PCT) level = 3;
+            else if (pct >= emg_THRESH_MED_PCT)  level = 2;
+            else if (pct >= emg_THRESH_LOW_PCT)  level = 1;
+            else                                 level = 0;
         }
 
-        ctsCounter += combinedScore;
+        Serial.println("=======EMG SENSOR=======");
+        Serial.print("min: ");        Serial.print(emg_windowMin);
+        Serial.print("  max: ");      Serial.print(emg_windowMax);
+        Serial.print("  spread: ");   Serial.print(pct, 1);
+        Serial.print("%  ->  ");      Serial.println(levelLabel(level));
+
+        Serial.println("=======FLEX SENSOR=======");
+        Serial.print(flex_raw);
+        Serial.print(" | ");          Serial.print(flex_voltage, 2);
+        Serial.print("V | ");         Serial.print(flex_resistance / 1000.0, 1);
+        Serial.print("KΩ | ");        Serial.print(flex_position);
+        Serial.print(" | ");          Serial.print(flex_direction);
+        Serial.print(" ");            Serial.print(flex_zone);
+        Serial.print(" | ");          Serial.println(returnValue);
+
+        // Math model (now correctly runs once per window)
+        emg_history[historyIndex]  = level;
+        flex_history[historyIndex] = returnValue;
+        historyIndex = (historyIndex + 1) % 3;
+        if (historyIndex == 0) historyFull = true;
+
+        int combinedScore = 0;
+        bool emg_passed   = false;
+        bool flex_passed  = false;
+
+        if (historyFull) {
+            int emg_sum  = emg_history[0]  + emg_history[1]  + emg_history[2];
+            int flex_sum = flex_history[0] + flex_history[1] + flex_history[2];
+
+            if (emg_sum  >= SPIKE_FILTER_THRESHOLD) { combinedScore += emg_sum;  emg_passed  = true; }
+            if (flex_sum >= SPIKE_FILTER_THRESHOLD) { combinedScore += flex_sum; flex_passed = true; }
+
+            ctsCounter += combinedScore;
+        }
+
+        if (ctsCounter >= CTS_THRESHOLD) ctsRisk = true;
+
+        Serial.println("=======MATH MODEL=======");
+        Serial.print("EMG  last 3 sum: "); Serial.print(emg_history[0] + emg_history[1] + emg_history[2]);
+        Serial.print("  passed: ");        Serial.println(emg_passed  ? "YES" : "NO");
+        Serial.print("Flex last 3 sum: "); Serial.print(flex_history[0] + flex_history[1] + flex_history[2]);
+        Serial.print("  passed: ");        Serial.println(flex_passed ? "YES" : "NO");
+        Serial.print("Combined Score: ");  Serial.print(combinedScore);
+        Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
+        Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
+        Serial.println();
+
+        emg_windowMin   = LONG_MAX;
+        emg_windowMax   = 0;
+        emg_windowStart = now;
     }
-
-    if (ctsCounter >= CTS_THRESHOLD) {
-        ctsRisk = true;
-    }
-
-    Serial.println("=======MATH MODEL=======");
-    Serial.print("EMG  last 3 sum: "); Serial.print(emg_history[0] + emg_history[1] + emg_history[2]);
-    Serial.print("  passed: ");        Serial.println(emg_passed  ? "YES" : "NO");
-    Serial.print("Flex last 3 sum: "); Serial.print(flex_history[0] + flex_history[1] + flex_history[2]);
-    Serial.print("  passed: ");        Serial.println(flex_passed ? "YES" : "NO");
-    Serial.print("Combined Score: ");  Serial.print(combinedScore);
-    Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
-    Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
-    Serial.println();
-
-    delay(1000);
 }
