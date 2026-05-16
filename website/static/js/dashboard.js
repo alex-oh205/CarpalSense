@@ -291,11 +291,11 @@ async function calculateRiskAndSummary() {
     summary.alerts.push('Wrist bend is high.');
   }
 
-  if (emgCounter > 250) {
+  if (emgCounter > 100) {
     warningLabel = 'High';
     warningClass = 'metric-value-critical';
     summary.alerts.push('Wrist tension has been high for an extended period. Relax your wrist.');
-  } else if (emgCounter > 125) {
+  } else if (emgCounter > 50) {
     if (warningLabel === 'Good') {
       warningLabel = 'Caution';
       warningClass = 'metric-value-warning';
