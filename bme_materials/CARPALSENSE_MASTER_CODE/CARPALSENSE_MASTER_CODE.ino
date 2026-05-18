@@ -22,7 +22,7 @@ const float FLEX_R_DIV = 47000.0;
 //   1. Hold sensor completely flat  → note raw, set flex_rawFlat
 //   2. Bend fully FORWARD (normal)  → note raw, set flex_rawForward
 //   3. Bend fully BACKWARD          → note raw, set flex_rawBackward
-int flex_rawFlat     = 550;  // Resting flat value
+int flex_rawFlat     = 540;  // Resting flat value
 int flex_rawForward  = 420;   // Raw when fully bent forward
 int flex_rawBackward = 610;  // Raw when fully bent backward
 
@@ -56,9 +56,9 @@ const unsigned long emg_timeBudget = 2000;
 //   THRESH_HIGH_PCT — % spread to count as High   contraction
 // Percent spread = ((max - min) / min) * 100
 const unsigned long emg_WINDOW_MS       = 1000;
-const float         emg_THRESH_LOW_PCT  = 35.0f;
-const float         emg_THRESH_MED_PCT  = 55.0f;
-const float         emg_THRESH_HIGH_PCT = 75.0f;
+const float         emg_THRESH_LOW_PCT  = 200.0f;
+const float         emg_THRESH_MED_PCT  = 300.0f;
+const float         emg_THRESH_HIGH_PCT = 600.0f;
 
 unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
@@ -181,8 +181,8 @@ void loop() {
         else                         { flex_zone = "Full";      returnValue = 3; }
     } else if (flex_position < -flex_DEADZONE) {
         flex_direction = "BACKWARD";
-        if      (flex_position > -30) { flex_zone = "Slight";   returnValue = 1; }
-        else if (flex_position > -55) { flex_zone = "Moderate"; returnValue = 2; }
+        if      (flex_position > -35) { flex_zone = "Slight";   returnValue = 1; }
+        else if (flex_position > -65) { flex_zone = "Moderate"; returnValue = 2; }
         else                          { flex_zone = "Full";      returnValue = 3; }
     } else {
         flex_direction = "FLAT";
