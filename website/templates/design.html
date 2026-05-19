@@ -7,8 +7,87 @@
 {% block main %}
     <br>
     <!--Title-->
-    <h1 class="text-center heading"><strong>Sensor Design</strong></h1>
+    <h1 class="text-center heading"><strong>How To Use CarpalSense</strong></h1>
     <br>
+
+    <!--Procedure-->
+    <section class="container mx-auto d-flex flex-column gap-4">
+        <div class="row row-cols-1 row-cols-md-2 g-5 mt-0 p-5 mx-auto procedure-odd rounded-5 procedure-animation">
+            <div class="col d-flex gap-4 align-items-center justify-content-center mt-0">
+                <h1>1.</h1>
+                <p>Place the EMG sensor on your forearm using
+                    the band attached to it. Ensure that the cable
+                    is facing away from you and that the EMG is
+                    placed on the Flexor Pollicis Longus muscle.</p>
+            </div>
+            <div class="col mt-0 d-flex justify-content-center">
+                <img src="{{ url_for('static', filename='img/step_1.png') }}" alt="Step 1" class="img-fluid rounded-4">
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 g-5 p-5 mx-auto mt-0 procedure-even rounded-5 procedure-animation">
+            <div class="col mt-0 order-2 order-md-1 d-flex justify-content-center">
+                <img src="{{ url_for('static', filename='img/step_2.png') }}" alt="Step 2" class="img-fluid rounded-4">
+            </div>
+            <div class="col mt-0 order-1 order-md-2 d-flex gap-4 align-items-center justify-content-center">
+                <h1>2.</h1>
+                <p>Connect a Micro-B to USB cable to the Arduino
+                    Nano 33 IOT (located underneath the housing)
+                    but do not plug the USB end into the device
+                    being connected.</p>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 g-5 p-5 mx-auto mt-0 procedure-odd rounded-5 procedure-animation">
+            <div class="col mt-0 d-flex gap-4 align-items-center justify-content-center">
+                <h1>3.</h1>
+                <p>Gently pull the glove over your
+                    left hand. Make sure that the
+                    Arduino 33 Nano IOT and the rest
+                    of the circuit are facing up when
+                    you do so. Double check all sensor
+                    positions before beginning any
+                    data collection.</p>
+            </div>
+            <div class="col mt-0 d-flex justify-content-center">
+                <img src="{{ url_for('static', filename='img/step_3.png') }}" alt="Step 3" class="img-fluid rounded-4">
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 g-5 p-5 mx-auto mt-0 procedure-even rounded-5 procedure-animation">
+            <div class="col mt-0 order-2 order-md-1 d-flex justify-content-center">
+                <img src="{{ url_for('static', filename='img/step_4.png') }}" alt="Step 4" class="img-fluid rounded-4">
+            </div>
+            <div class="col mt-0 order-1 order-md-2 d-flex gap-4 align-items-center justify-content-center">
+                <h1>4.</h1>
+                <p>Plug in the USB into the computer and
+                    place your gloved hand flat on a desk in
+                    a flat position for 5-8 seconds. Holding
+                    this position will allow the sensor to
+                    calibrate the EMG.</p>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 g-5 p-5 mx-auto mt-0 procedure-odd rounded-5 procedure-animation">
+            <div class="col mt-0 d-flex gap-4 align-items-center justify-content-center">
+                <h1>5.</h1>
+                <p>Once your device is connected, go to your Dashboard and start a new monitoring session.
+                    Click Start to begin collecting data. To toggle
+                    which sensor you see, use the sensor view menu.</p>
+            </div>
+            <div class="col mt-0 d-flex justify-content-center">
+                <img src="{{ url_for('static', filename='img/step_5.png') }}" alt="Step 5" class="img-fluid rounded-4">
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 g-5 p-5 mx-auto mt-0 procedure-even rounded-5 procedure-animation">
+            <div class="col mt-0 order-2 order-md-1 d-flex justify-content-center">
+                <img src="{{ url_for('static', filename='img/step_6.png') }}" alt="Step 6" class="img-fluid rounded-4">
+            </div>
+            <div class="col mt-0 order-1 order-md-2 d-flex gap-4 align-items-center justify-content-center">
+                <h1>6.</h1>
+                <p>If the accumulated strain on
+                    the wrist reaches a “danger
+                    zone”, a notification will pop up in the Alerts
+                    panel telling you what the risk is and what you should do.</p>
+            </div>
+        </div>
+    </section>
 
     <!--Materials--
     <div class="row row-cols-1 row-cols-md-2 mx-auto" style="width:80%">
@@ -163,22 +242,21 @@
                 </div>
             </div>
         </div>
-    </section>
--->
+    </section>-->
     
 
     <!--Usage-->
-    <section class="mt-5">
+    <!-- <section class="mt-5">
         <div class="w-75 mx-auto px-5 pt-3 pb-5 rounded-4" style="background: linear-gradient(0deg, var(--bg) 0%, var(--surface) 100%);">
             <br>
             <h3 class="text-center"><strong>Usage Guide</strong></h3>
             <!-- <video class="rounded-4 mt-5" width="100%" style="aspect-ratio: 16 / 9;" controls>
                 <source src="{{ url_for('static', filename='/videos/demo.mp4') }}" type="video/mp4">
                 Your browser does not support the video tag.
-            </video> -->
+            </video> --
             <iframe src="{{ url_for('static', filename='documents/user_manual.pdf') }}" width="100%" height="600px" class="mt-5" style="border:none;"></iframe>
         </div>
-    </section>
+    </section> -->
     
 
 {% endblock main %}

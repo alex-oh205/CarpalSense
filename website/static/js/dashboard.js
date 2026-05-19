@@ -6,7 +6,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebas
 import { getAuth, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword }
   from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-import { getDatabase, ref, set, update, child, get, remove, onValue }
+import { getDatabase, ref, set, update, child, get, remove }
   from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js"
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -802,12 +802,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   sensorChart = await createChart(dataType, 'sensorGraph');
 
   historyChart = await createChart(historyDataType, 'historyGraph', selectedHistorySessionId, false, true);
-
-  // Track Firebase connectivity state
-  const connectedRef = ref(db, '.info/connected');
-  onValue(connectedRef, (snapshot) => {
-    setConnectionStatus(snapshot.val() === true);
-  });
 
   // Update graph on sensor type dropdown change
   document.getElementById('dataType').addEventListener('change', (event) => {
