@@ -9,7 +9,7 @@
 #include "WProgram.h"
 #endif
 
-#include <limits.h>       // provides LONG_MAX for EMG window
+#include <limits.h>       // Used for window timing
 #include "EMGFilters.h"
 
 // --- FLEX SENSOR: Pin & Circuit ---
@@ -18,11 +18,7 @@ const float FLEX_VCC = 3.3;
 const float FLEX_R_DIV = 47000.0;
 
 // --- FLEX SENSOR: Calibration ---
-// To calibrate:
-//   1. Hold sensor completely flat  → note raw, set flex_rawFlat
-//   2. Bend fully FORWARD (normal)  → note raw, set flex_rawForward
-//   3. Bend fully BACKWARD          → note raw, set flex_rawBackward
-int flex_rawFlat     = 540;  // Resting flat value
+int flex_rawFlat     = 550;  // Resting flat value
 int flex_rawForward  = 420;   // Raw when fully bent forward
 int flex_rawBackward = 610;  // Raw when fully bent backward
 
@@ -50,48 +46,33 @@ unsigned long emg_timeStamp;
 const unsigned long emg_timeBudget = 2000;
 
 // --- EMG SENSOR: Contraction Window Settings ---
-//   WINDOW_MS       — length of each observation window in milliseconds
-//   THRESH_LOW_PCT  — % spread to count as Low    contraction
-//   THRESH_MED_PCT  — % spread to count as Medium contraction
-//   THRESH_HIGH_PCT — % spread to count as High   contraction
 // Percent spread = ((max - min) / min) * 100
-const unsigned long emg_WINDOW_MS       = 1000;
-const float         emg_THRESH_LOW_PCT  = 200.0f;
-const float         emg_THRESH_MED_PCT  = 300.0f;
-const float         emg_THRESH_HIGH_PCT = 600.0f;
+const unsigned long emg_WINDOW_MS       = 1000;         // length of each observation window in milliseconds
+const float         emg_THRESH_LOW_PCT  = 50.0f;
+const float         emg_THRESH_MED_PCT  = 100.0f;
+const float         emg_THRESH_HIGH_PCT = 200.0f;
 
 unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
 long          emg_windowMax   = 0;
 
 // --- MATH MODEL: Counter & CTS Risk ---
-//   ctsCounter             — running total of weighted movement score
-//   CTS_THRESHOLD          — score at which CTS risk flag is set
-//   ctsRisk                — set to true when counter exceeds threshold
-//   emg_history[]          — stores last 3 EMG level readings
-//   flex_history[]         — stores last 3 flex returnValue readings
-//   historyIndex           — tracks position in the 3-reading rolling window
-//   historyFull            — true once at least 3 readings have been collected
-//   SPIKE_FILTER_THRESHOLD — minimum sum of 3 readings required to add to counter
-//                            (sum of 3 must be >= 4 to rule out single spikes;
-//                             e.g. 1 high + 2 none = sum of 3, rejected;
-//                                  2 low  + 1 med  = sum of 4, accepted)
-long          ctsCounter             = 0;
-const long    CTS_THRESHOLD          = 500000;
+long          ctsCounter             = 0;           // total weighted score
+const long    CTS_THRESHOLD          = 500000;      // threshold to alert user of CTS risk
 bool          ctsRisk                = false;
 
-int           emg_history[3]         = {0, 0, 0};
-int           flex_history[3]        = {0, 0, 0};
+int           emg_history[3]         = {0, 0, 0};   // array of the last 3 readings for EMG
+int           flex_history[3]        = {0, 0, 0};   // array of the last 3 readings for flex
 int           historyIndex           = 0;
 bool          historyFull            = false;
-const int     SPIKE_FILTER_THRESHOLD = 4;
+const int     SPIKE_FILTER_THRESHOLD = 4;           // minimum value of the combined three readings to filter out spikes
 
 
 // ============================================================
 //  SECTION 2: SENSOR CODE
 // ============================================================
 
-// --- EMG SENSOR: RMS Helper Function ---
+// --- EMG SENSOR: RMS Helper ---
 long computeRMS(long newVal) {
     if (newVal > 200000) newVal = 200000;
     emg_rmsSum -= emg_rmsBuffer[emg_rmsIndex];
@@ -101,7 +82,7 @@ long computeRMS(long newVal) {
     return emg_rmsSum / RMS_WINDOW;
 }
 
-// --- EMG SENSOR: Contraction Label Helper ---
+// --- EMG SENSOR: Labels ---
 const char* levelLabel(int lvl) {
     switch (lvl) {
         case 0:  return "No Contraction";
@@ -129,7 +110,7 @@ void setup() {
 
     // --- FLEX SENSOR: Setup ---
     pinMode(FLEX_PIN, INPUT);
-
+    // --- Setup Notification ---
     Serial.println("=== CTS Master Sensor Code ===");
     Serial.println("EMG ready. Flex sensor ready.");
     emg_windowStart = millis();
@@ -137,9 +118,8 @@ void setup() {
 
 void loop() {
 
-    // ── EMG: Sample every iteration (needed for 500Hz filter) ──
+    // --- EMG Data Collection ---
     emg_timeStamp = micros();
-
     analogRead(SensorInputPin);
     int emg_Value = analogRead(SensorInputPin);
     int centered  = emg_Value - 3700;
@@ -150,7 +130,7 @@ void loop() {
     if (smoothed < emg_windowMin) emg_windowMin = smoothed;
     if (smoothed > emg_windowMax) emg_windowMax = smoothed;
 
-    // ── FLEX: Read every iteration (lightweight, no print yet) ──
+    // --- Flex Data Collection ---
     int flex_raw = analogRead(FLEX_PIN);
     float flex_voltage    = flex_raw * (FLEX_VCC / 4095.0);  // fixed: 12-bit ADC
     float flex_resistance = 0;
@@ -174,15 +154,15 @@ void loop() {
     const char* flex_direction;
     const char* flex_zone;
 
-    if (flex_position > flex_DEADZONE) {
+    if (flex_position > flex_DEADZONE) {            // Uses the positive and negative raw values to determine flexion/extension and assigns a value to the returnValue to be used in the math model
         flex_direction = "FORWARD";
         if      (flex_position < 40) { flex_zone = "Slight";   returnValue = 1; }
         else if (flex_position < 75) { flex_zone = "Moderate"; returnValue = 2; }
         else                         { flex_zone = "Full";      returnValue = 3; }
-    } else if (flex_position < -flex_DEADZONE) {
+    } else if (flex_position < -flex_DEADZONE) {    // Different values are used for backwards because backwards movement is more strenuous
         flex_direction = "BACKWARD";
-        if      (flex_position > -35) { flex_zone = "Slight";   returnValue = 1; }
-        else if (flex_position > -65) { flex_zone = "Moderate"; returnValue = 2; }
+        if      (flex_position > -30) { flex_zone = "Slight";   returnValue = 1; }
+        else if (flex_position > -55) { flex_zone = "Moderate"; returnValue = 2; }
         else                          { flex_zone = "Full";      returnValue = 3; }
     } else {
         flex_direction = "FLAT";
@@ -190,7 +170,6 @@ void loop() {
         returnValue    = 0;
     }
 
-    // ── Once per second: print everything + run math model ──
     unsigned long now = millis();
     if (now - emg_windowStart >= emg_WINDOW_MS) {
 
@@ -219,10 +198,10 @@ void loop() {
         Serial.print(" ");            Serial.print(flex_zone);
         Serial.print(" | ");          Serial.println(returnValue);
 
-        // Math model (now correctly runs once per window)
+        // --- Math model ---
         emg_history[historyIndex]  = level;
         flex_history[historyIndex] = returnValue;
-        historyIndex = (historyIndex + 1) % 3;
+        historyIndex = (historyIndex + 1) % 3;      // Resets array every 3 loops 
         if (historyIndex == 0) historyFull = true;
 
         int combinedScore = 0;
