@@ -82,9 +82,9 @@ const unsigned long emg_timeBudget = 2000;
 // --- EMG SENSOR: Contraction Window Settings ---
 // Percent spread = ((max - min) / min) * 100
 const unsigned long emg_WINDOW_MS       = 1000;     // length of each observation window in milliseconds
-const float         emg_THRESH_LOW_PCT  = 35.0f;
-const float         emg_THRESH_MED_PCT  = 55.0f;
-const float         emg_THRESH_HIGH_PCT = 75.0f;
+const float         emg_THRESH_LOW_PCT  = 50.0f;
+const float         emg_THRESH_MED_PCT  = 100.0f;
+const float         emg_THRESH_HIGH_PCT = 200.0f;
 
 unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
