@@ -1,4 +1,10 @@
-// ----------------- Page Loaded After User Sign-in -------------------------//
+/**
+ * Project Name: CarpalSense
+ * Team Members: Shiv Patel, Kanata Sasaki, Alex Oh, Arjun ArunPrasad
+ * Date: 5/27/2026
+ * Description: Functions for dashboard page that handles user interactions, data visualization, and communication with Firebase.
+ */
+
 // ----------------- Firebase Setup & Initialization ------------------------//
 
 // Import the functions you need from the SDKs you need
@@ -46,12 +52,15 @@ let selectedHistorySessionId = '';
 
 // --------------------- Utility Functions ----------------------------
 // Formats date to display only time (HH:MM:SS)
+// date: Date object to format
+// returns: Formatted time string
 function formatTime(date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 // --------------------- State Update Functions ----------------------------
 // Updates the connection status badge on the dashboard
+// isConnected: boolean indicating if Firebase connection is active
 function setConnectionStatus(isConnected) {
   const status = document.getElementById('connectionStatus');
   status.textContent = isConnected ? 'Connected' : 'Disconnected';
@@ -59,6 +68,7 @@ function setConnectionStatus(isConnected) {
 }
 
 // Updates the data activity status badge on the dashboard
+// isActive: boolean indicating if new data is being received
 function setDataActivityStatus(isActive) {
   const mode = document.getElementById('modeStatus');
   mode.textContent = isActive ? 'Active' : 'No updates';
@@ -66,6 +76,7 @@ function setDataActivityStatus(isActive) {
 }
 
 // Updates the current session label on the dashboard
+// label: string to display as the current session name
 function setCurrentSessionLabel(label) {
   const labelEl = document.getElementById('currentSessionLabel');
   if (!labelEl) return;
@@ -123,6 +134,8 @@ function updateCollectButtonState() {
 
 // --------------------- Session Management Functions ----------------------
 // Creates a new session in Firebase and returns the session ID and name
+// userID: Firebase user ID
+// returns: Object containing session ID and name
 async function createSession(userID) {
   const createdAt = Date.now();
   const id = `session-${createdAt}`;
@@ -158,6 +171,7 @@ async function createSession(userID) {
 }
 
 // Sets the active session ID on the server
+// sessionId: ID of the session to set as active
 async function setServerSessionId(sessionId) {
   try {
     await fetch('/session', {
@@ -171,6 +185,7 @@ async function setServerSessionId(sessionId) {
 }
 
 // Sets the current active session on the dashboard
+// session: Object containing session ID and name to set as active
 function setCurrentSession(session) {
   activeSessionId = session.id;
   activeSessionName = session.name;
@@ -180,6 +195,7 @@ function setCurrentSession(session) {
 }
 
 // Loads user's sessions from Firebase and populates the session history dropdown
+// userID: Firebase user ID
 async function loadSessions(userID) {
   const sessionsSelect = document.getElementById('historySessions');
   if (!sessionsSelect) return;
@@ -213,6 +229,8 @@ async function loadSessions(userID) {
 }
 
 // Deletes a session from Firebase
+// userID: Firebase user ID
+// sessionId: ID of the session to delete
 async function deleteSession(userID, sessionId) {
   if (!sessionId) return;
   try {
@@ -229,6 +247,7 @@ async function deleteSession(userID, sessionId) {
 // ---------------------- Session Summary Functions ----------------------------
 
 // Calculates risk, summary info, and alerts using sensor data
+// returns: Object containing summary information
 async function calculateRiskAndSummary() {
   const flexData = await getSessionData(window.currentUser.uid, activeSessionId, 'bend');
   const emgData = await getSessionData(window.currentUser.uid, activeSessionId, 'emg');
@@ -357,6 +376,7 @@ async function calculateRiskAndSummary() {
 }
 
 // Builds alert list items on dashboard
+// messages: array of alert messages to display
 function buildAlerts(messages) {
   const alertList = document.getElementById('alertList');
   alertList.innerHTML = '';
@@ -404,6 +424,7 @@ async function updateDashboardSummary() {
 }
 
 // Updates the past session summary display
+// summary: Object containing summary information
 function updateHistorySummary(summary) {
   const riskLevel = document.getElementById('historyRiskLevel');
   const highRiskMinutes = document.getElementById('historyHighRiskMinutes');
@@ -435,6 +456,9 @@ function updateHistorySummary(summary) {
 }
 
 // Updates session summary in Firebase
+// userID: Firebase user ID
+// sessionId: ID of the session to update
+// summary: Object containing summary information
 async function updateSessionSummary(userID, sessionId, summary) {
   if (!sessionId) return;
   summary = structuredClone(summary);
@@ -449,6 +473,9 @@ async function updateSessionSummary(userID, sessionId, summary) {
 }
 
 // Gets session summary from Firebase
+// userID: Firebase user ID
+// sessionId: ID of the session to retrieve summary
+// returns: Object containing summary information
 async function getSessionSummary(userID, sessionId) {
   if (!sessionId) return null;
   const dbref = ref(db);
@@ -459,6 +486,10 @@ async function getSessionSummary(userID, sessionId) {
 // --------------------- Data and Chart Functions ----------------------------
 
 // Gets session sensor data from Firebase
+// userID: Firebase user ID
+// sessionId: ID of the session to retrieve data from
+// dataType: type of sensor data to retrieve ('bend', 'emg', or 'imu')
+// returns: Array of data points ({ x: time, y: value })
 async function getSessionData(userID, sessionId, dataType) {
   const items = [];
   const dbref = ref(db);
@@ -482,6 +513,12 @@ async function getSessionData(userID, sessionId, dataType) {
 }
 
 // Creates a chart from sensor data
+// dataType: type of sensor data to visualize ('bend', 'emg', or 'imu')
+// id: ID of the canvas element
+// sessionId: ID of the session to retrieve data from
+// updateSummary: whether to update the session summary as well
+// showAll: whether to show all data points or just the most recent data
+// returns: Chart instance
 async function createChart(dataType, id, sessionId = activeSessionId, updateSummary = true, showAll = false){
   let data = [];
   if (sessionId) {
@@ -688,6 +725,8 @@ async function createChart(dataType, id, sessionId = activeSessionId, updateSumm
 }
 
 // Updates chart data in real-time
+// chart: Chart instance to update
+// dataType: type of sensor data to update ('bend', 'emg', or 'imu')
 async function updateChartData(chart, dataType) {
   if (!activeSessionId) return;
   try {
@@ -712,6 +751,7 @@ async function updateChartData(chart, dataType) {
 }
 
 // Starts real-time updates
+// dataType: type of sensor data to update ('bend', 'emg', or 'imu')
 function startRealTimeUpdates(dataType) {
   isCollecting = true;
   if (sessionDataStarted) {
@@ -773,7 +813,7 @@ function destroyHistoryChart() {
   historyChart = null;
 }
 
-// --------------------------- Home Page Loading -----------------------------
+// --------------------------- Dashboard Loading -----------------------------
 window.addEventListener('DOMContentLoaded', async () => {
   // Check if signed in, if not redirect to sign-in page
   if (!window.currentUser) {

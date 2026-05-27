@@ -1,8 +1,11 @@
-# Filename:  app-test.py
-# Flask app for Flask + Firebase 
-# Coded By:  Alex Oh
+"""
+Project Name: CarpalSense
+Team Members: Shiv Patel, Kanata Sasaki, Alex Oh, Arjun ArunPrasad
+Date: 5/27/2026
+Description: Flask app that is the backend for the CarpalSense website and handles data transfer between the Arduino and Firebase database.
+"""
 
-# Flask app to test sending user's Firebase information to Flask & writing sample data usign p
+# Flask app to send user's Firebase information to Flask & writing Arduino data to Firebase using Pyrebase
 import pyrebase
 from flask import Flask, render_template, url_for, request, jsonify, redirect
 from datetime import datetime
@@ -56,7 +59,7 @@ def signIn():              # Returns the sign in page
 
 # Logout route
 @app.route("/logout")
-def logout():
+def logout():              # Returns the sign in page
     global currentUser, idToken, config, sessionTime, currentSessionId
     currentUser = None
     idToken = None
@@ -65,6 +68,7 @@ def logout():
     currentSessionId = None
     return redirect(url_for('signIn'))
 
+# Makes currentUser available in all templates
 @app.context_processor
 def inject_globals():
     return dict(currentUser=currentUser)
@@ -151,6 +155,7 @@ def data():
         
         return 'Success', 200
 
+# Route to start a new session and initialize session parameters
 @app.route('/session', methods=['POST'])
 def session():
     global currentSessionId, collectingData, sessionTime, config, currentUser, db, idToken
@@ -169,6 +174,7 @@ def session():
     
     return 'Success', 200
 
+# Route to update session parameters during an active session
 @app.route('/session-data', methods=['POST'])
 def session_data():
     global collectingData, sessionTime, prevSessionTime
@@ -193,4 +199,4 @@ if __name__ == "__main__":
 
     # Run app through port 5000 on local dev
     app.run(debug=True, port=5000)
-    # app.run(debug=True, port=5000, host="10.55.118.184")
+    # app.run(debug=True, port=5000, host="172.20.10.9")

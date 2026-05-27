@@ -1,24 +1,6 @@
-.about {                                    /* hide overlap for the about us cards*/
-    overflow: hidden;
-}
+/* ----------------- General Styling ----------------- */
 
-.w-40 {
-    width: 40%;
-}
-
-.w-875 {
-    width: 87.5%;
-}
-
-.about img {                                /* create animation for making the face zoom in */
-    transform-origin: 50% 20%;
-    transition: transform 2s ease-out;
-}
-
-.about:hover img {                          /* define the scale for the face zoom */
-    transform: scale(1.3);
-}
-
+/* define CSS variables */
 :root {
     --bg: #050e18;
     --surface: #111827;
@@ -32,18 +14,225 @@
     --navbar-height: 60px;
 }
 
-.about-body {                               /* color for the card description and layering */
-    z-index: 1;
-    background-color: var(--surface);
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+    background-color: var(--bg);
+    font-family: "Inter", sans-serif;
 }
 
-.background-transparent {                    /* transparent background */
+main {
+    flex: 1;
+}
+
+.heading {                  /* offset main content because of navbar */
+    margin-top: var(--navbar-height);
+}
+
+footer {                    /* Ensure footer is at the bottom of the page */
+    margin-top: auto;
+    margin-top: 50px;
+}
+
+.footerBG{
+    background-color: var(--surface-2);
+}
+
+/* ----------------- Card CSS ----------------- */
+
+.card-animation {                           /* shadow for bootstrap cards */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    background-color: var(--card);
+}
+
+.card-animation:hover {                     /* animation for card hover */
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.08);
+    background-color: var(--card-hover);
+}
+
+.card-image {                               /* overflow for cards */
+    overflow: hidden;
+}
+
+.card-image img {                           /* dimensions for card images */
+    height: 200px;
+    object-fit: cover;
+}
+
+/* ----------------- Navbar CSS ----------------- */
+
+#navbar {
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+nav {
+    min-height: var(--navbar-height);
+}
+
+.background-transparent {                    /* transparent navbar background when at top of page */
     background-color: transparent;
 }
 
-.background-color-dark {                    /* navbar and footer background color */
+.background-color-dark {                    /* dark navbar background when scrolled */
     background-color: var(--surface-2);
 }
+
+.navbar-shadow {                            /* shadow for navbar when scrolled */
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.3), inset 0 -1px rgba(255, 255, 255, 0.08);
+}
+
+/* Large screen navbar styling */
+@media (min-width: 768px) {
+    #navmenu .navbar-nav {
+        height: 100%;
+        align-items: stretch;
+        margin-left: 20px;
+    }
+
+    #navmenu .navbar-nav .nav-item {
+        height: var(--navbar-height);
+    }
+
+    #navmenu .navbar-nav .nav-link {
+        display: flex;
+        align-items: center;
+        height: var(--navbar-height);
+    }
+}
+
+/* Small screen navbar styling */
+@media (max-width: 767.98px) {
+    #navmenu .navbar-nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #navmenu .nav-item {
+        width: 100%;
+    }
+
+    #navmenu .nav-link {
+        width: 100%;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        padding-left: 30px !important;
+    }
+}
+
+/* Hamburger button styling */
+.navbar-toggler {                           /* hamburger menu button */
+    border: none !important;
+    transition: color 0.3s;
+}
+
+.navbar-toggler:hover {                     /* hamburger button hover color */
+    color: #fff !important;
+}
+
+.navbar-toggler:focus {                     /* mouse click on the hamburger button */
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.btn-close:focus {                     /* remove close button focus effect */
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Navbar menu item and link styling */
+.nbMenuItem {                               /* navbar menu item css */
+    color: #fff;
+    transition: color 0.1s, background-color 0.3s;
+    width: auto;
+}
+
+.nbMenuItem.active {                        /* active state for navbar menu */
+    font-weight: 600;
+}
+
+.linkItem {                               /* navbar menu link css */
+    color: #fff;
+    transition: color 0.1s;
+}
+
+.linkItem:hover {                         /* hover animation for navbar menu links */
+    color: #c7c7c7;
+}
+
+/* Profile menu and auth buttons styling */
+#profileDropdown:focus {                  /* ensure active dropdown link stays visible */
+    color: #c7c7c7 !important;
+}
+
+.btn {
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.outline-light-hover:hover {                         /* hover animation for light outline buttons */
+    background-color: transparent;
+    color: #b7b7b7;
+    border-color: #b7b7b7;
+}
+
+/* Navbar logo styling */
+.logo:hover img {                           /* navbar logo animation */
+    animation: spin 0.5s ease-in-out;
+}
+
+@keyframes spin {                    /* animation for above, image spins */
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* -----------------Underline Animation CSS -----------------*/
+
+.hover-underline-animation {                /* navbar hover */
+    position: relative;
+    display: inline-block;
+}
+
+.hover-underline-animation::after {         /* animation for navbar hover */
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #fff;
+    transform-origin: bottom center;
+}
+
+.hover-underline-animation:hover::after {   /* scale when hovered */
+    transform: scaleX(1);
+    transition: transform 0.25s ease-out;
+}
+
+@media only screen and (max-width: 768px) {
+    .hover-underline-animation::after {
+        width: 2px;
+        height: 100%;
+        transform-origin: left center;
+        transform: scaleY(0);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .hover-underline-animation:hover::after {
+        transform: scaleY(1);
+    }
+}
+
+/* ----------------- Index Page CSS ----------------- */
 
 .banner {                                   /* home page banner */
     background: #07111F;
@@ -78,264 +267,75 @@
     animation: slideIn 4s cubic-bezier(0.215, 0.61, 0.355, 1) 0.2s forwards;
 }
 
-.navbar-shadow {
-    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.3), inset 0 -1px rgba(255, 255, 255, 0.08);
-}
-
-@keyframes slideIn {                /* defines slideIn used above */
+@keyframes slideIn {                /* defines slide in animation for website heading and subheading */
     to {
         transform: translateX(0);
         opacity: 1;
     }
 }
 
-body {                                      /* defines margins for body */
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    margin: 0;
-    overflow-x: hidden;
-    background-color: var(--bg);
-    font-family: "Inter", sans-serif;
+/* ----------------- How To Page CSS ----------------- */
+
+/* Alternate row color gradients for procedure steps */
+.procedure-odd {
+    background: linear-gradient(90deg, rgb(0, 0, 0, 0.7) 0%, rgb(0, 0, 0, 0.2) 100%);
 }
 
-footer {
-    margin-top: auto;
+.procedure-even {
+    background: linear-gradient(90deg, rgb(255, 255, 255, 0.3) 0%, rgb(255, 255, 255, 0.15) 100%);
 }
 
-main {
-    flex: 1;
+.procedure-animation img {           /* styling for procedure images */
+    height: 300px;
+    object-fit: cover;
+    transition: height 0.3s;
 }
 
-.card-animation {                           /* shadow for bootstrap cards */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-    background-color: var(--card);
+.procedure-animation p {            /* styling for procedure text */
+    transform: scale(1);
+    transform-origin: center left;
+    transition: transform 0.3s;
 }
 
-.card-animation:hover {                     /* animation for bootstrap card hover */
-    transform: scale(1.05);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    background-color: var(--card-hover);
+.procedure-animation:hover img {   /* enlarge procedure images on hover */
+    height: 400px !important;
 }
 
-.card-image {                               /* overflow for home page cards */
+.procedure-animation:hover p {      /* enlarge procedure text on hover */
+    transform: scale(1.1);
+}
+
+
+/*
+.my-table, .my-table th, .my-table td {
+    background-color: transparent !important;
+    /* border: 2px solid rgba(255, 255, 255, 0.15) !important; *
+}
+*/
+
+/* ----------------- About Us Page CSS ----------------- */
+
+.about {                                    /* hide overlap for the about us cards*/
     overflow: hidden;
 }
 
-.card-image img {                           /* dimensions for card images */
-    height: 200px;
-    object-fit: cover;
+.about img {                                /* create animation for making the face zoom in */
+    transform-origin: 50% 20%;
+    transition: transform 2s ease-out;
 }
 
-.card-animation:hover {                     /* animation for bootstrap card hover */
-    transform: scale(1.05);
-    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.08);
+.about:hover img {                          /* define the scale for the face zoom */
+    transform: scale(1.3);
 }
 
-/* ----------------- Class CSS ----------------- */
-
-
-.dataForm{
-    display: flex;
-    justify-content: left;
-    align-items: center;
+.about-body {                               /* color for the card description and layering */
+    z-index: 1;
+    background-color: var(--surface);
 }
 
-.days{
-    text-align: center;
-    vertical-align: middle;
-}
+/* ----------------- Dashboard Page CSS ----------------- */
 
-footer {
-    margin-top: 50px;
-}
-
-.footerBG{
-    background-color: var(--surface-2);
-}
-
-.ordered-List-item-font{
-    font-size:22px;
-}
-
-.signUpForm{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.temps-table{
-    max-height: 250px;  /*prevent table from stretching to bottom of screen*/
-    overflow: auto;
-}
-
-.temps{
-    text-align: center;
-    vertical-align: middle;
-}
-
-#navbar {
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-nav {
-    min-height: var(--navbar-height);
-}
-
-@media (min-width: 768px) {
-    #navmenu .navbar-nav {
-        height: 100%;
-        align-items: stretch;
-        margin-left: 20px;
-    }
-
-    #navmenu .navbar-nav .nav-item {
-        height: var(--navbar-height);
-    }
-
-    #navmenu .navbar-nav .nav-link {
-        display: flex;
-        align-items: center;
-        height: var(--navbar-height);
-    }
-}
-
-@media (max-width: 767.98px) {
-    #navmenu .navbar-nav {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    #navmenu .nav-item {
-        width: 100%;
-    }
-
-    #navmenu .nav-link {
-        width: 100%;
-        min-height: 50px;
-        display: flex;
-        align-items: center;
-        padding-left: 30px !important;
-    }
-}
-
-.navbar-toggler {                           /* hamburger menu button */
-    border: none !important;
-    transition: color 0.3s;
-}
-
-.navbar-toggler:hover {                     /* hamburger button hover color */
-    color: #fff !important;
-}
-
-.navbar-toggler:focus {                     /* mouse click on the hamburger button */
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-.btn-close:focus {                     /* remove close button focus effect */
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-.nbMenuItem {                               /* navbar menu item css */
-    color: #fff;
-    transition: color 0.1s, background-color 0.3s;
-    width: auto;
-}
-
-.nbMenuItem.active {                        /* active state for navbar menu */
-    font-weight: 600;
-}
-
-.linkItem {                               /* navbar menu link css */
-    color: #fff;
-    transition: color 0.1s;
-}
-
-.linkItem:hover {                         /* hover animation for navbar menu links */
-    color: #c7c7c7;
-}
-
-#profileDropdown:focus {                  /* ensure active dropdown link stays visible */
-    color: #c7c7c7 !important;
-}
-
-.notes{
-    font-size:20px;
-}
-
-.btn {
-    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.outline-light-hover:hover {                         /* hover animation for light outline buttons */
-    background-color: transparent;
-    color: #b7b7b7;
-    border-color: #b7b7b7;
-}
-
-.w-40 {
-    width: 40%
-}
-
-.px-6 {
-    padding-left: 5rem;
-    padding-right: 5rem;
-}
-
-.px-7 {
-    padding-left: 8rem;
-    padding-right: 8rem;
-}
-
-.logo:hover img {                           /* home page button animation */
-    animation: spin 0.5s ease-in-out;
-}
-
-@keyframes spin {                    /* animation for above, image spins */
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.my-table, .my-table th, .my-table td {
-    background-color: transparent !important;
-    /* border: 2px solid rgba(255, 255, 255, 0.15) !important; */
-}
-
-.heading {
-    margin-top: var(--navbar-height);
-}
-
-/* -----------------Underline Animation CSS -----------------*/
-.hover-underline-animation {                /* navbar hover */
-    position: relative;
-    display: inline-block;
-}
-
-.hover-underline-animation::after {         /* animation for navbar hover */
-    content: '';
-    position: absolute;
-    width: 100%;
-    transform: scaleX(0);
-    height: 2px;
-    bottom: 0;
-    left: 0;
-    background-color: #fff;
-    transform-origin: bottom center;
-}
-
-.hover-underline-animation:hover::after {   /* scale when hovered */
-    transform: scaleX(1);
-    transition: transform 0.25s ease-out;
-}
-
-body:has(.dashboard) {
+body:has(.dashboard) {             /* background gradient for the dashboard page */
     background: linear-gradient(135deg, var(--bg) 0%, rgb(55, 0, 110) 100%);
 }
 
@@ -344,6 +344,8 @@ body:has(.dashboard) {
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 16px 28px rgba(0, 0, 0, 0.18);
 }
+
+/* Dashboard metrics styling */
 
 .metric-card {
     background-color: rgba(255, 255, 255, 0.04);
@@ -374,6 +376,8 @@ body:has(.dashboard) {
     color: #9ba6c1;
 }
 
+/* Dashboard status badges styling */
+
 .status-badge {
     padding: 0.6rem 0.85rem;
     font-size: 0.85rem;
@@ -399,6 +403,8 @@ body:has(.dashboard) {
     color: #ffffff;
 }
 
+/* Dashboard chart styling */
+
 .chart-panel {
     height: 430px;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%) !important;
@@ -412,6 +418,8 @@ body:has(.dashboard) {
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
     flex: 1;
 }
+
+/* Dashboard summary styling */
 
 .summary-list {
     display: grid;
@@ -436,6 +444,8 @@ body:has(.dashboard) {
     font-weight: 700;
 }
 
+/* Dashboard alerts styling */
+
 .alert-list {
     background: transparent;
 }
@@ -446,33 +456,7 @@ body:has(.dashboard) {
     color: #f8f9fa;
 }
 
-.procedure-odd {
-    background: linear-gradient(90deg, rgb(0, 0, 0, 0.7) 0%, rgb(0, 0, 0, 0.2) 100%);
-}
-
-.procedure-even {
-    background: linear-gradient(90deg, rgb(255, 255, 255, 0.3) 0%, rgb(255, 255, 255, 0.15) 100%);
-}
-
-.procedure-animation img {                           /* shadow for bootstrap cards */
-    height: 300px;
-    object-fit: cover;
-    transition: height 0.3s;
-}
-
-.procedure-animation p {
-    transform: scale(1);
-    transform-origin: center left;
-    transition: transform 0.3s;
-}
-
-.procedure-animation:hover img {                     /* animation for bootstrap card hover */
-    height: 400px !important;
-}
-
-.procedure-animation:hover p {
-    transform: scale(1.1);
-}
+/* Dashboard dropdown styling */
 
 .form-select-dark {
     background-color: rgba(255, 255, 255, 0.05);
@@ -495,16 +479,10 @@ body:has(.dashboard) {
     color: #ffffff;
 }
 
-@media only screen and (max-width: 768px) {
-    .hover-underline-animation::after {
-        width: 2px;
-        height: 100%;
-        transform-origin: left center;
-        transform: scaleY(0);
-        transition: transform 0.3s, box-shadow 0.3s;
-    }
+/* ----------------- Sign In/Sign Up Page CSS ----------------- */
 
-    .hover-underline-animation:hover::after {
-        transform: scaleY(1);
-    }
+.signUpForm{
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

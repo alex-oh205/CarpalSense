@@ -90,9 +90,9 @@ const unsigned long emg_timeBudget = 2000;
 //   THRESH_HIGH_PCT — % spread to count as High   contraction
 // Percent spread = ((max - min) / min) * 100
 const unsigned long emg_WINDOW_MS       = 1000;
-const float         emg_THRESH_LOW_PCT  = 35.0f;
-const float         emg_THRESH_MED_PCT  = 55.0f;
-const float         emg_THRESH_HIGH_PCT = 75.0f;
+const float         emg_THRESH_LOW_PCT  = 200.0f;
+const float         emg_THRESH_MED_PCT  = 300.0f;
+const float         emg_THRESH_HIGH_PCT = 600.0f;
 
 unsigned long emg_windowStart = 0;
 long          emg_windowMin   = LONG_MAX;
@@ -135,7 +135,7 @@ WiFiClient client;
 
 // server address:
 //char server[] = "jsonplaceholder.typicode.com"; // for public domain server
-IPAddress server(172, 20, 10, 6); // for localhost server (server IP address can be found with ipconfig or ifconfig)
+IPAddress server(172, 20, 10, 9); // for localhost server (server IP address can be found with ipconfig or ifconfig)
 
 unsigned long lastConnectionTime = 0;
 const unsigned long postingInterval = 10L * 50L; // delay between updates, in milliseconds (10L * 50L is around 1 second between requests)

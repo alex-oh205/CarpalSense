@@ -1,4 +1,9 @@
-// This JS file is for registering a new app user ---------------------------//
+/**
+ * Project Name: CarpalSense
+ * Team Members: Shiv Patel, Kanata Sasaki, Alex Oh, Arjun ArunPrasad
+ * Date: 5/27/2026
+ * Description: Handles user sign-up/account creation functionality and validation.
+ */
 
 // ----------------- Firebase Setup & Initialization ------------------------//
 // Import the functions you need from the SDKs you need
