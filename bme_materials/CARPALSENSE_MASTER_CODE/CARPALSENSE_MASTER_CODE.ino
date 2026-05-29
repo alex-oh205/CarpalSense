@@ -2,10 +2,6 @@
 
 // Arduino Libraries
 #include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
-
 #include <limits.h>       // used for window timing
 #include "EMGFilters.h"   // needed for EMG code
 
@@ -15,8 +11,8 @@ const float FLEX_VCC = 3.3;
 const float FLEX_RES = 47000.0;
 
 // Flex Thresholds
-int flexFlat     = 550;  // flat value
-int flexForward  = 420;  // fully bent forward
+int flexFlat = 550;  // flat value
+int flexForward = 420;  // fully bent forward
 int flexBackward = 610;  // fully bent backward
 
 const int flexDead = 2;
@@ -27,50 +23,46 @@ int level = 0;           // EMG: 0 = No Contraction to 3 = High Contraction
 #define SensorInputPin A5
 #define RMS_WINDOW 100
 
-long emgBuffer[RMS_WINDOW] = {0};   //
+long emgBuffer[RMS_WINDOW] = {0};   
 int  emgIndex = 0;
-long emgSum = 0;
-
-static long emgThreshold = 2000;
+long emgRMS = 0;
 
 // EMG Filter
 EMGFilters myFilter;
 SAMPLE_FREQUENCY sampleRate = SAMPLE_FREQ_500HZ;
 NOTCH_FREQUENCY  humFreq    = NOTCH_FREQ_60HZ;
 
-unsigned long emgTime;
-
 // EMG Thresholds
 const unsigned long emgWindow = 1000;  // length of each observation window in milliseconds
-const float emgLow  = 50.0f;           
-const float emgMedium  = 100.0f;
+const float emgLow = 50.0f;           
+const float emgMedium = 100.0f;
 const float emgHigh = 200.0f;
 
 unsigned long windowStart = 0;         // Records the time between each EMG return
-long windowMin   = LONG_MAX;
-long windowMax   = 0;
+long windowMin = LONG_MAX;
+long windowMax = 0;
 
 // Math Model Values
-long ctsCounter             = 0;          // total weighted score
-const long ctsThreshold          = 500000;      // threshold to alert user of CTS risk
-bool ctsRisk                = false;
+long ctsCounter = 0;          // total weighted score
+const long ctsThreshold = 500000;      // threshold to alert user of CTS risk
+bool ctsRisk = false;
 
-int emgMM[3]         = {0, 0, 0};   // array of the last 3 readings for EMG
-int flexMM[3]        = {0, 0, 0};   // array of the last 3 readings for flex
-int historyIndex           = 0;
-bool historyFull            = false;
-const int valueThreshold = 4;         // minimum value of the combined three readings to filter out spikes
+int emgMM[3] = {0, 0, 0};   // array of the last 3 readings for EMG
+int flexMM[3] = {0, 0, 0};   // array of the last 3 readings for flex
+int historyIndex = 0;
+bool historyFull = false;
+const int valueThreshold = 4; // minimum value of the combined three readings to filter out spikes
 
 
 //  SECTION 2: SENSOR CODE
 // EMG RMS
 long computeRMS(long newVal) {        // function is used to smooth out values from EMG sensor
     if (newVal > 200000) newVal = 200000;
-    emgSum -= emgBuffer[emgIndex];
+    emgRMS -= emgBuffer[emgIndex];
     emgBuffer[emgIndex] = newVal;
-    emgSum += newVal;
+    emgRMS += newVal;
     emgIndex = (emgIndex + 1) % RMS_WINDOW;
-    return emgSum / RMS_WINDOW;
+    return emgRMS / RMS_WINDOW;
 }
 
 void setup() {
@@ -99,7 +91,6 @@ void setup() {
 void loop() {
 
     // EMG Data
-    emgTime = micros();
     analogRead(SensorInputPin);
     int emgRet = analogRead(SensorInputPin);
     int centered  = emgRet - 3700;           // clears out extra noise
