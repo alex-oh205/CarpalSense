@@ -12,8 +12,8 @@ const float FLEX_RES = 47000.0;
 
 // Flex Thresholds
 int flexFlat = 550;  // flat value
-int flexForward = 420;  // fully bent forward
-int flexBackward = 610;  // fully bent backward
+int flexForward = 400;  // fully bent forward
+int flexBackward = 600;  // fully bent backward
 
 const int flexDead = 2;
 int returnValue = 0;     // Flex: 0 = None to 3 = High
@@ -163,7 +163,7 @@ void loop() {
         Serial.print(" | " + String(flexPosition)); 
         Serial.print(" | " + String(flexDirection)); 
         Serial.print(" | Bend: " + String(flexBend)); 
-        Serial.print(" | Filter Value: " + String(returnValue)); 
+        Serial.println(" | Filter Value: " + String(returnValue)); 
 
         // Math model
         emgMM[historyIndex]  = level;
@@ -175,7 +175,7 @@ void loop() {
         bool emgCounter  = false;
         bool flexCounter = false;
 
-        if (historyFull) {    // compares 3 stored values to the threshold after 3 trials
+        if (historyFull && historyIndex == 0) {    // compares 3 stored values to the threshold after 3 trials
             int emgSum  = emgMM[0]  + emgMM[1]  + emgMM[2];
             int flexSum = flexMM[0] + flexMM[1] + flexMM[2];
             if (emgSum  >= valueThreshold) { combinedScore += emgSum;  emgCounter  = true; }
