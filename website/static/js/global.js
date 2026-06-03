@@ -1,3 +1,10 @@
+/**
+ * Project Name: CarpalSense
+ * Team Members: Shiv Patel, Kanata Sasaki, Alex Oh, Arjun ArunPrasad
+ * Date: 5/27/2026
+ * Description: Functions for global use across the website including user state management.
+ */
+
 // ----------------- Navbar User State Management ------------------------//
 
 // Import the functions you need from the SDKs you need
@@ -98,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// Navbar background change on scroll
 function scrollNavbar(event) {
   const navbar = document.getElementById('navbar');
   if (window.scrollY > 20) {
@@ -113,21 +121,6 @@ function scrollNavbar(event) {
 
 scrollNavbar(null);
 window.addEventListener('scroll', scrollNavbar);
-
-(() => {
-  'use strict'
-  const forms = document.querySelectorAll('.needs-validation');
-
-  Array.from(forms).forEach(form => {
-    form.addEventListener('submit', event => {
-      if (!form.checkValidity()) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      form.classList.add('was-validated');
-    }, false);
-  });
-})();
 
 // Initialize all popovers on a page
 const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
