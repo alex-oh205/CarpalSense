@@ -230,14 +230,20 @@ void loop() {
         Serial.print("min: " + String(windowMin)); 
         Serial.print("  max: " + String(windowMax)); 
         Serial.print("  spread: " + String(pct) + "1"); 
-        String contraction = level == 0 ? "No contraction" : level == 1 ? "Low" : level == 2 ? "Medium" : level == 3 ? "High"
-        Serial.println("% -> " + contraction);
+        Serial.print("% ->  ");
+        switch (level) {
+            case 0: Serial.println("No Contraction"); break;
+            case 1: Serial.println("Low"); break;
+            case 2: Serial.println("Medium"); break;
+            case 3: Serial.println("High"); break;
+            default: Serial.println("Error"); break;
+        }
         Serial.println("FLEX SENSOR");
         Serial.print("Raw: " + String(flexRaw));
-        Serial.print("Position: " + String(flexPosition)); 
-        Serial.print("Direction: " + String(flexDirection)); 
-        Serial.print("Bend: " + String(flexBend)); 
-        Serial.print("# Value: " + String(returnValue)); 
+        Serial.print(" | " + String(flexPosition)); 
+        Serial.print(" | " + String(flexDirection)); 
+        Serial.print(" | Bend: " + String(flexBend)); 
+        Serial.print(" | Filter Value: " + String(returnValue)); 
 
         // Math model
         emgMM[historyIndex]  = level;
@@ -261,12 +267,13 @@ void loop() {
         if (ctsCounter >= ctsThreshold) ctsRisk = true;
 
         Serial.println("MATH MODEL");
-        Serial.print("EMG sum: " + String(emgMM[0] + emgMM[1] + emgMM[2]));
-        Serial.println("Flex sum: " + String(flexMM[0] + flexMM[1] + flexMM[2]));
-        Serial.print("Combined Score: " + String(combinedScore));
-        Serial.print("    Counter: " + String(ctsCounter));
-        Serial.print("    CTS Risk: ");   
-        Serial.println(ctsRisk ? "TRUE" : "false");
+        Serial.print("EMG  last 3 sum: "); Serial.print(emgMM[0] + emgMM[1] + emgMM[2]);
+        Serial.print("  passed: ");        Serial.println(emgCounter  ? "YES" : "NO");
+        Serial.print("Flex last 3 sum: "); Serial.print(flexMM[0] + flexMM[1] + flexMM[2]);
+        Serial.print("  passed: ");        Serial.println(flexCounter ? "YES" : "NO");
+        Serial.print("Combined Score: ");  Serial.print(combinedScore);
+        Serial.print("  |  Counter: ");    Serial.print(ctsCounter);
+        Serial.print("  |  CTS Risk: ");   Serial.println(ctsRisk ? "TRUE" : "false");
         Serial.println();
 
         windowMin = LONG_MAX;
