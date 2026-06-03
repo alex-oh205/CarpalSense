@@ -97,8 +97,40 @@ form.addEventListener('submit', (event) => {
       firstname: firstName,
       lastname: lastName
     })
-    .then(() => {
-      alert('User created successfully!')
+    .then(async () => {
+      // alert('User created successfully!');
+
+      // Get the ID token and add to firebase configuration
+      // User ID token is used by the Flask server to let Firebase know that it has
+      // permission to read/write data to the current user's account.
+      const idToken = await user.getIdToken(/* forceRefresh */ true);
+      const backendConfig = {
+        ...firebaseConfig,
+        idToken,
+        currentUser: user.uid  // Keep uid for Firebase operations
+      };
+
+      // Log sign-in date in the database
+      // 'update' will only add the last_login info and won't overwrite everything
+      let logDate = new Date();
+      await update(ref(db, 'users/' + user.uid + '/accountInfo'), {
+        last_login: logDate,
+      });
+
+      // alert('User signed in successfully!');
+
+      // Get snapshot of all the user information that will be passed
+      // to the login() function and stored in either session or local storage
+      // snapshot - copy of a system's state at a specific point in time
+      const snapshot = await get(ref(db, 'users/' + user.uid + '/accountInfo'));
+      if (snapshot.exists()) {
+        console.log(snapshot.val());
+        let userData = snapshot.val();
+        userData.uid = user.uid; // Add the Firebase user ID to the user data
+        logIn(userData, backendConfig);
+      } else {
+        alert('User does not exist');
+      }
     });
   })
   .catch((error) => {
@@ -106,3 +138,27 @@ form.addEventListener('submit', (event) => {
     alert(errorMessage);
   });
 });
+
+async function logIn(user, fbcfg) {
+  sessionStorage.setItem('user', JSON.stringify(user))
+
+  // Send Firebase config and user ID to app.py using POST
+  const payload = { ...fbcfg, currentUser: user };
+  try {
+    const response = await fetch('/data', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      console.error('Failed to send login info to server:', await response.text());
+      return;
+    }
+  } catch (error) {
+    console.error('Error sending login info to server:', error);
+    return;
+  }
+
+  window.location = "/dashboard";       // Redirect browser to dashboard.html
+}
